@@ -1,0 +1,34 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+---
+cff-version: 1.2.0
+title: arrow-lint
+message: >-
+  If you use this software, please cite it using the
+  metadata from the CITATION.cff file.
+type: software
+authors:
+  - given-names: ArrowLint
+    family-names: contributors
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/CU-DBMI/arrow-lint"
+abstract: >-
+  A fast, opinionated, extensible linter for Apache Arrow datasets and related formats.
+keywords:
+  - python
+license: BSD-3-Clause
+references:
+  - type: software
+    title: "agent-skills"
+    authors:
+      - given-names: Addy
+        family-names: Osmani
+    repository-code: "https://github.com/addyosmani/agent-skills"
+    license: MIT
+  - type: software
+    title: "learning-opportunities"
+    authors:
+      - given-names: Dan
+        family-names: Hicks
+    repository-code: "https://github.com/DrCatHicks/learning-opportunities"
+    license: CC-BY-4.0

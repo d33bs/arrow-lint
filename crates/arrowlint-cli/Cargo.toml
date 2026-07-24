@@ -1,0 +1,18 @@
+[package]
+name = "arrowlint-cli"
+description = "Command line interface for ArrowLint."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "arrow-lint-rs"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+arrowlint-core = { path = "../arrowlint-core" }
+clap.workspace = true
+serde_json.workspace = true

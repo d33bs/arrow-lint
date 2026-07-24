@@ -1,0 +1,14 @@
+scan:
+  recursive: true
+  follow_links: false
+
+rules:
+  min_row_group_rows: 100000
+  small_file_bytes: 67108864
+  fail_on: error
+  disabled: []
+  declarative_rule_files:
+    - examples/rules/metadata.yaml
+
+output:
+  format: text

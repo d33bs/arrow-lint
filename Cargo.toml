@@ -1,0 +1,26 @@
+[workspace]
+members = [
+  "crates/arrowlint-cli",
+  "crates/arrowlint-core",
+  "crates/arrowlint-python",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/CU-DBMI/arrow-lint"
+rust-version = "1.82"
+
+[workspace.dependencies]
+anyhow = "1.0"
+arrow = "59.1.0"
+clap = { version = "4.6.4", features = ["derive"] }
+parquet = "59.1.0"
+pyo3 = "0.29.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+thiserror = "2.0"
+walkdir = "2.5"

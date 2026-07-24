@@ -1,0 +1,18 @@
+[package]
+name = "arrowlint-python"
+description = "Python bindings for ArrowLint."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow.workspace = true
+arrowlint-core = { path = "../arrowlint-core" }
+pyo3 = { workspace = true, features = ["extension-module"] }
+serde_json.workspace = true
