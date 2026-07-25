@@ -1,0 +1,583 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>arrow-lint &#8212; arrow-lint  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=63dfd3e1" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Architecture" href="architecture.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="#">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">arrow-lint</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture.html">
+    Architecture
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="rules.html">
+    Rules
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="format-packs.html">
+    Format Packs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="python-api.html">
+    Python API
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/CU-DBMI/arrow-lint" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture.html">
+    Architecture
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="rules.html">
+    Rules
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="format-packs.html">
+    Format Packs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="python-api.html">
+    Python API
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/CU-DBMI/arrow-lint" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <!-- include contents from the root readme -->
+<section id="arrow-lint">
+<h1>arrow-lint<a class="headerlink" href="#arrow-lint" title="Link to this heading">#</a></h1>
+<p>Sharpen your Arrow datasets.</p>
+<p>ArrowLint is a fast, opinionated, extensible linter for Apache Arrow datasets
+and related formats. It provides quick local feedback, CI-friendly reports, and
+a rule system designed for the Arrow ecosystem.</p>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Rust core engine with a common dataset model.</p></li>
+<li><p>Scanners for Parquet, Arrow IPC, and Feather.</p></li>
+<li><p>Python API and Python-first CLI.</p></li>
+<li><p>Native Rust CLI for direct integration.</p></li>
+<li><p>Built-in rules for schema consistency, metadata, row groups, statistics,
+compression, timestamp portability, dictionary encoding, and small files.</p></li>
+<li><p>JSON, SARIF, and human-readable reports.</p></li>
+<li><p>YAML declarative rules for simple metadata checks.</p></li>
+<li><p>Extension points for additional rule packs.</p></li>
+</ul>
+</section>
+<section id="supported-inputs">
+<h2>Supported Inputs<a class="headerlink" href="#supported-inputs" title="Link to this heading">#</a></h2>
+<p>ArrowLint scans:</p>
+<ul class="simple">
+<li><p>Apache Parquet</p></li>
+<li><p>Apache Arrow IPC files</p></li>
+<li><p>Feather files</p></li>
+</ul>
+<p>The project also defines extension boundaries for Iceberg, Vortex, Lance, and
+DuckDB-focused checks. These formats are represented in the format-pack registry
+so rule packs can share a consistent discovery and reporting model.</p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>sync
+uv<span class="w"> </span>run<span class="w"> </span>maturin<span class="w"> </span>develop
+</pre></div>
+</div>
+</section>
+<section id="cli">
+<h2>CLI<a class="headerlink" href="#cli" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--config<span class="w"> </span>.arrowlint.yaml
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--output<span class="w"> </span>json
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--output<span class="w"> </span>sarif<span class="w"> </span>&gt;<span class="w"> </span>arrowlint.sarif
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>rules
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>formats
+</pre></div>
+</div>
+<p>There is also a native Rust binary:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span>arrowlint-cli<span class="w"> </span>--<span class="w"> </span>lint<span class="w"> </span>path/to/dataset
+</pre></div>
+</div>
+</section>
+<section id="python-api">
+<h2>Python API<a class="headerlink" href="#python-api" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">lint</span>
+
+<span class="n">report</span> <span class="o">=</span> <span class="n">lint</span><span class="p">(</span><span class="s2">&quot;path/to/dataset&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="s2">&quot;.arrowlint.yaml&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">diagnostic</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;diagnostics&quot;</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">diagnostic</span><span class="p">[</span><span class="s2">&quot;rule_id&quot;</span><span class="p">],</span> <span class="n">diagnostic</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h2>
+<p>ArrowLint reads YAML configuration:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">scan</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">recursive</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">min_row_group_rows</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100000</span>
+<span class="w">  </span><span class="nt">small_file_bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">67108864</span>
+<span class="w">  </span><span class="nt">fail_on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">error</span>
+<span class="w">  </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<span class="w">  </span><span class="nt">declarative_rule_files</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">examples/rules/metadata.yaml</span>
+</pre></div>
+</div>
+<p>Declarative rules cover simple metadata checks:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">rule</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">missing_crs</span>
+<span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="nt">applies_to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">parquet</span>
+<span class="nt">check</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">metadata_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">crs</span>
+</pre></div>
+</div>
+</section>
+<section id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Python API / CLI
+        |
+        v
+PyO3 native module       Rust CLI
+        |                   |
+        +--------+----------+
+                 v
+          arrowlint-core
+        /       |        \
+ scanners  dataset model  rules
+        \       |        /
+              reports
+</pre></div>
+</div>
+<p>The core crate owns scanning, diagnostics, rule execution, and rendering. The
+Python package is deliberately thin so plugin authors and data teams get a
+comfortable interface without compromising the Rust fast path.</p>
+</section>
+<section id="extension-strategy">
+<h2>Extension Strategy<a class="headerlink" href="#extension-strategy" title="Link to this heading">#</a></h2>
+<p>The built-in engine focuses on common Arrow, Feather, and Parquet checks. The
+format pack registry defines stable boundaries for specialized rule packs:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-iceberg</span></code> for manifests, snapshots, partition evolution, and delete files.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-vortex</span></code> for array encodings, chunk sizing, and statistics.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-lance</span></code> for fragments, indexes, schema evolution, and vector metadata.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-duckdb</span></code> for Arrow export round-trips, nested types, timestamps, and writer settings.</p></li>
+</ul>
+<p>Rule packs can start in this repository and move to separate packages when their
+public APIs are stable.</p>
+</section>
+<section id="development">
+<h2>Development<a class="headerlink" href="#development" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo<span class="w"> </span><span class="nb">test</span>
+uv<span class="w"> </span>run<span class="w"> </span>maturin<span class="w"> </span>develop
+uv<span class="w"> </span>run<span class="w"> </span>pytest
+pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#core-boundaries">Core Boundaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#dataset-model">Dataset Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#extension-point">Extension Point</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rules.html">Rules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#declarative-rules">Declarative Rules</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="format-packs.html">Format Packs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="format-packs.html#built-in">Built In</a></li>
+<li class="toctree-l2"><a class="reference internal" href="format-packs.html#external-rule-packs">External Rule Packs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="python-api.html">Python API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="python-api.html#module-arrow_lint.api">arrow_lint.api</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api._normalize_paths"><code class="docutils literal notranslate"><span class="pre">_normalize_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.formats"><code class="docutils literal notranslate"><span class="pre">formats()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.lint"><code class="docutils literal notranslate"><span class="pre">lint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.rules"><code class="docutils literal notranslate"><span class="pre">rules()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="right-next"
+       href="architecture.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Architecture</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, ArrowLint contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__center">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

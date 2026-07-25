@@ -1,6 +1,0 @@
-rule: missing_producer
-description: dataset is missing producer metadata
-severity: info
-applies_to: parquet
-check:
-  metadata_key: producer
