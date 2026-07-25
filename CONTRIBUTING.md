@@ -91,7 +91,9 @@ the root `Cargo.toml`.
 
 Release versions should be updated in the Cargo workspace before building
 release artifacts. The Python source distribution and wheel should report the
-same version as the Rust workspace package.
+same version as the Rust workspace package. Release tags use the form
+`v<version>` and CI verifies that the tag version matches the Cargo package
+version before publishing.
 
 ### Releases
 
