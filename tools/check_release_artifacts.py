@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import struct
 import tarfile
 import zipfile
 from pathlib import Path
 
+EOCD_SIGNATURE = b"PK\x05\x06"
+EOCD_MIN_SIZE = 22
+LOCAL_FILE_HEADER_SIGNATURE = b"PK\x03\x04"
 SUPPORTED_PLATFORM_PREFIXES = ("any", "manylinux", "musllinux", "macosx", "win")
 SUPPORTED_ARCHIVE_SUFFIXES = (".whl", ".tar.gz")
 REQUIRED_SDIST_FILES = {
@@ -108,6 +112,7 @@ def validate_sdist_license_files(path: Path) -> None:
 
 
 def validate_wheel_license_files(path: Path) -> None:
+    validate_strict_zip(path)
     with zipfile.ZipFile(path) as archive:
         names = set(archive.namelist())
         metadata_name = find_member(names, ".dist-info/METADATA")
@@ -127,6 +132,41 @@ def validate_wheel_license_files(path: Path) -> None:
                     "but the file is missing"
                 )
         validate_required_wheel_files(path.name, names)
+
+
+def validate_strict_zip(path: Path) -> None:
+    with zipfile.ZipFile(path) as archive:
+        names = archive.namelist()
+        duplicates = sorted({name for name in names if names.count(name) > 1})
+        if duplicates:
+            raise SystemExit(
+                f"{path.name} has duplicate ZIP members: {', '.join(duplicates)}"
+            )
+        invalid_member = archive.testzip()
+        if invalid_member is not None:
+            raise SystemExit(
+                f"{path.name} has invalid ZIP member data: {invalid_member}"
+            )
+
+    data = path.read_bytes()
+    if not data.startswith(LOCAL_FILE_HEADER_SIGNATURE):
+        raise SystemExit(f"{path.name} has prepended data before ZIP archive")
+    eocd_offset = data.rfind(EOCD_SIGNATURE)
+    if eocd_offset < 0:
+        raise SystemExit(f"{path.name} is missing ZIP end-of-central-directory")
+    if len(data) < eocd_offset + EOCD_MIN_SIZE:
+        raise SystemExit(f"{path.name} has truncated ZIP end-of-central-directory")
+    central_directory_size = struct.unpack_from("<I", data, eocd_offset + 12)[0]
+    central_directory_offset = struct.unpack_from("<I", data, eocd_offset + 16)[0]
+    central_directory_end = central_directory_offset + central_directory_size
+    if central_directory_end != eocd_offset:
+        raise SystemExit(f"{path.name} has malformed ZIP central directory")
+    comment_length = struct.unpack_from("<H", data, eocd_offset + 20)[0]
+    if comment_length:
+        raise SystemExit(f"{path.name} has ZIP comment data")
+    expected_end = eocd_offset + EOCD_MIN_SIZE
+    if expected_end != len(data):
+        raise SystemExit(f"{path.name} has trailing data after ZIP archive")
 
 
 def find_member(names: set[str], suffix: str) -> str | None:

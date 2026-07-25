@@ -2,6 +2,7 @@
 
 import io
 import tarfile
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -11,8 +12,10 @@ from tools.check_release_artifacts import (
     validate_required_sdist_files,
     validate_required_wheel_files,
     validate_sdist_license_files,
+    validate_strict_zip,
     validate_wheel_platform,
 )
+from tools.prepare_release_dist import prepare_release_dist
 
 
 def test_release_artifacts_accept_pypi_platform_wheels() -> None:
@@ -66,6 +69,53 @@ def test_release_artifacts_reject_missing_required_sdist_files() -> None:
 def test_release_artifacts_reject_missing_required_wheel_files() -> None:
     with pytest.raises(SystemExit, match="missing required wheel files"):
         validate_required_wheel_files("arrow_lint-0.0.3-cp311-cp311-any.whl", set())
+
+
+def test_release_artifacts_reject_trailing_wheel_data(tmp_path: Path) -> None:
+    wheel = tmp_path / "arrow_lint-0.0.3-cp311-cp311-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("arrow_lint/__init__.py", "")
+    with wheel.open("ab") as handle:
+        handle.write(b"trailing data")
+
+    with pytest.raises(SystemExit, match="trailing data"):
+        validate_strict_zip(wheel)
+
+
+def test_release_artifacts_reject_wheel_comment_data(tmp_path: Path) -> None:
+    wheel = tmp_path / "arrow_lint-0.0.3-cp311-cp311-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.comment = b"comment"
+        archive.writestr("arrow_lint/__init__.py", "")
+
+    with pytest.raises(SystemExit, match="ZIP comment data"):
+        validate_strict_zip(wheel)
+
+
+def test_release_artifacts_reject_prepended_wheel_data(tmp_path: Path) -> None:
+    wheel = tmp_path / "arrow_lint-0.0.3-cp311-cp311-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("arrow_lint/__init__.py", "")
+    wheel.write_bytes(b"prepended data" + wheel.read_bytes())
+
+    with pytest.raises(SystemExit, match="prepended data"):
+        validate_strict_zip(wheel)
+
+
+def test_release_artifacts_reject_duplicate_downloaded_filenames(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "dist-artifacts"
+    first = source / "wheels-ubuntu"
+    second = source / "wheels-macos"
+    first.mkdir(parents=True)
+    second.mkdir(parents=True)
+    artifact_name = "arrow_lint-0.0.3-cp311-cp311-any.whl"
+    (first / artifact_name).write_bytes(b"first")
+    (second / artifact_name).write_bytes(b"second")
+
+    with pytest.raises(SystemExit, match="duplicate release artifact filename"):
+        prepare_release_dist(source, tmp_path / "dist")
 
 
 def add_tar_text(archive: tarfile.TarFile, name: str, text: str = "content\n") -> None:

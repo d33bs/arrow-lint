@@ -126,8 +126,13 @@ jobs:
       - name: Download package distributions
         uses: actions/download-artifact@v5
         with:
-          path: dist
-          merge-multiple: true
+          path: dist-artifacts
+      - name: Prepare package distributions
+        run: |
+          rm -rf dist
+          uv run --frozen python tools/prepare_release_dist.py \
+            dist-artifacts \
+            dist
       - name: Verify package distributions
         run: |
           uvx twine check dist/*
