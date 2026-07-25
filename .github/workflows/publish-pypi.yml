@@ -36,7 +36,16 @@ jobs:
         run: |
           uv run --frozen python tools/sync_release_version.py \
             "$GITHUB_REF_NAME"
-      - name: uv build distribution content
-        run: uv build
+      - name: Build package distributions
+        run: |
+          uv run --frozen maturin build \
+            --release \
+            --sdist \
+            --compatibility pypi \
+            --out dist
+      - name: Verify package distributions
+        run: |
+          uvx twine check dist/*
+          uv run --frozen python tools/check_release_artifacts.py dist
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.0
