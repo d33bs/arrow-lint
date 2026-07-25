@@ -31,6 +31,21 @@ jobs:
         uses: astral-sh/setup-uv@v8.2.0
         with:
           enable-cache: false
+      - name: Verify release tag matches package version
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          jq_filter='.packages[] | select(.name == "arrowlint-python")'
+          package_version="$(
+            cargo metadata --no-deps --format-version 1 \
+              | jq -r "${jq_filter} | .version"
+          )"
+          release_version="${GITHUB_REF_NAME#v}"
+          if [ "$package_version" != "$release_version" ]; then
+            message="Release tag ${GITHUB_REF_NAME} does not match"
+            message="${message} package version ${package_version}."
+            echo "::error::${message}"
+            exit 1
+          fi
       - name: uv build distribution content
         run: uv build
       - name: Publish package distributions to PyPI
