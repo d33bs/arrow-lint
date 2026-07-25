@@ -40,6 +40,9 @@ manifest-path = "crates/arrowlint-python/Cargo.toml"
 module-name = "arrow_lint._native"
 python-source = "src"
 features = [ "pyo3/extension-module" ]
+include = [
+  { path = "LICENSE", format = "sdist" },
+]
 
 [tool.ruff]
 target-version = "py311"
@@ -99,10 +102,10 @@ test.shell = """
 maturin develop && pytest
 """
 lint.shell = """
-pre-commit run --all-files
+prek run --all-files
 """
 pipeline.shell = """
-cargo test && maturin develop && pre-commit run --all-files && pytest
+cargo test && maturin develop && prek run --all-files && pytest
 """
 
 [tool.vulture]
