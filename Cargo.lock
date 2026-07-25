@@ -329,7 +329,7 @@ dependencies = [
 
 [[package]]
 name = "arrowlint-cli"
-version = "0.0.1"
+version = "0.0.3"
 dependencies = [
  "anyhow",
  "arrowlint-core",
@@ -339,7 +339,7 @@ dependencies = [
 
 [[package]]
 name = "arrowlint-core"
-version = "0.0.1"
+version = "0.0.3"
 dependencies = [
  "anyhow",
  "arrow",
@@ -354,7 +354,7 @@ dependencies = [
 
 [[package]]
 name = "arrowlint-python"
-version = "0.0.1"
+version = "0.0.3"
 dependencies = [
  "anyhow",
  "arrowlint-core",

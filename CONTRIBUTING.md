@@ -89,11 +89,10 @@ Maturin resolves that version from the Rust package metadata in
 `crates/arrowlint-python/Cargo.toml`, which inherits the workspace version from
 the root `Cargo.toml`.
 
-Release versions should be updated in the Cargo workspace before building
-release artifacts. The Python source distribution and wheel should report the
-same version as the Rust workspace package. Release tags use the form
-`v<version>` and CI verifies that the tag version matches the Cargo package
-version before publishing.
+Release tags use the form `v<version>`. During release builds, CI synchronizes
+the Cargo workspace version from the release tag before building the Python
+source distribution and wheel. Local development builds use the version checked
+into the Cargo workspace.
 
 ### Releases
 
@@ -104,7 +103,7 @@ We publish source code by using [GitHub Releases](https://docs.github.com/en/rep
 Several manual and automated steps are involved with publishing releases.
 See below for an overview of how this works.
 
-Notes about [semantic version](https://en.wikipedia.org/wiki/Software_versioning#Semantic_versioning) (semver): release tags should match the Cargo workspace version used for the build.
+Notes about [semantic version](https://en.wikipedia.org/wiki/Software_versioning#Semantic_versioning) (semver): release tags define the package version used for release artifacts.
 
 1. Open a pull request and use a repository label for `release-<semver release type>` to label the pull request for visibility with [`release-drafter`](https://github.com/release-drafter/release-drafter).
 1. On merging the pull request for the release, a [GitHub Actions workflow](https://docs.github.com/en/actions/using-workflows) defined in `draft-release.yml` leveraging [`release-drafter`](https://github.com/release-drafter/release-drafter) will draft a release for maintainers.
