@@ -14,6 +14,7 @@ from tools.check_release_artifacts import (
     validate_sdist_license_files,
     validate_strict_zip,
     validate_wheel_platform,
+    validate_wheel_python,
 )
 from tools.prepare_release_dist import prepare_release_dist
 
@@ -34,6 +35,21 @@ def test_release_artifacts_reject_native_linux_wheel() -> None:
 def test_release_artifacts_reject_unknown_platform_wheel() -> None:
     with pytest.raises(SystemExit, match="unsupported wheel platform tag"):
         validate_wheel_platform("arrow_lint-0.0.3-cp311-cp311-solaris_11_x86_64.whl")
+
+
+def test_release_artifacts_accept_matching_python_tag() -> None:
+    validate_wheel_python(
+        "arrow_lint-0.0.3-cp312-cp312-manylinux_2_28_x86_64.whl",
+        "3.12",
+    )
+
+
+def test_release_artifacts_reject_mismatched_python_tag() -> None:
+    with pytest.raises(SystemExit, match="does not match matrix Python 3.12"):
+        validate_wheel_python(
+            "arrow_lint-0.0.3-cp311-cp311-manylinux_2_28_x86_64.whl",
+            "3.12",
+        )
 
 
 def test_release_artifacts_reject_missing_sdist_license_file(tmp_path: Path) -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import struct
 import tarfile
 import zipfile
@@ -45,6 +46,7 @@ REQUIRED_WHEEL_SUFFIXES = {
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--expected-python")
     parser.add_argument("dist", type=Path)
     args = parser.parse_args()
 
@@ -53,6 +55,16 @@ def main() -> int:
         raise SystemExit(f"no release artifacts found in {args.dist}")
 
     wheels = [path for path in artifacts if path.name.endswith(".whl")]
+    if args.expected_python is not None:
+        if len(artifacts) != 1 or len(wheels) != 1:
+            raise SystemExit(
+                "wheel build validation requires exactly one wheel artifact"
+            )
+        validate_wheel_python(wheels[0].name, args.expected_python)
+        validate_artifacts(wheels)
+        print(wheels[0].name)
+        return 0
+
     sdists = [path for path in artifacts if path.name.endswith(".tar.gz")]
     if not wheels:
         raise SystemExit("release artifacts must include at least one wheel")
@@ -86,6 +98,19 @@ def validate_wheel_platform(filename: str) -> None:
             )
         if not tag.startswith(SUPPORTED_PLATFORM_PREFIXES):
             raise SystemExit(f"unsupported wheel platform tag `{tag}` in {filename}")
+
+
+def validate_wheel_python(filename: str, expected_python: str) -> None:
+    if re.fullmatch(r"\d+\.\d+", expected_python) is None:
+        raise SystemExit(f"invalid expected Python version: {expected_python}")
+
+    python_tag = filename.removesuffix(".whl").split("-")[-3]
+    expected_tag = f"cp{expected_python.replace('.', '')}"
+    if expected_tag not in python_tag.split("."):
+        raise SystemExit(
+            f"wheel Python tag `{python_tag}` does not match "
+            f"matrix Python {expected_python}: {filename}"
+        )
 
 
 def validate_sdist_license_files(path: Path) -> None:

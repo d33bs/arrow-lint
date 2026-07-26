@@ -46,14 +46,21 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         shell: bash
         run: >-
-          uv run --frozen python tools/sync_release_version.py
+          python tools/sync_release_version.py
           "$RELEASE_TAG"
       - name: Build wheel
         run: >-
-          uv run --frozen maturin build --release --compatibility pypi
-          --out dist
+          uvx --python "${{ matrix.python-version }}"
+          --from "maturin>=1.9,<2"
+          maturin build --release --compatibility pypi
+          --interpreter python --out dist
+      - name: Verify wheel interpreter tag
+        run: >-
+          python tools/check_release_artifacts.py
+          --expected-python "${{ matrix.python-version }}"
+          dist
       - name: Upload wheel
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/*.whl
@@ -86,12 +93,12 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: >-
-          uv run --frozen python tools/sync_release_version.py
+          python tools/sync_release_version.py
           "$RELEASE_TAG"
       - name: Build source distribution
-        run: uv run --frozen maturin sdist --out dist
+        run: uvx --from "maturin>=1.9,<2" maturin sdist --out dist
       - name: Upload source distribution
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: dist/*.tar.gz
@@ -123,18 +130,18 @@ jobs:
         with:
           enable-cache: false
       - name: Download package distributions
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           path: dist-artifacts
       - name: Prepare package distributions
         run: |
           rm -rf dist
-          uv run --frozen python tools/prepare_release_dist.py \
+          python tools/prepare_release_dist.py \
             dist-artifacts \
             dist
       - name: Verify package distributions
         run: |
           uvx twine check dist/*
-          uv run --frozen python tools/check_release_artifacts.py dist
+          python tools/check_release_artifacts.py dist
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.0
