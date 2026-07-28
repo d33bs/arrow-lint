@@ -380,54 +380,188 @@
                   
   <section id="rules">
 <h1>Rules<a class="headerlink" href="#rules" title="Link to this heading">#</a></h1>
-<p>ArrowLint ships with built-in rules for common Arrow and Parquet quality issues.</p>
+<p>ArrowLint ships with built-in rules for common Arrow and Parquet quality issues.
+Rules classified as errors identify internally inconsistent metadata. Warnings
+identify deprecated features or broadly applicable interoperability and
+performance concerns. Informational diagnostics identify review opportunities.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Rule</p></th>
+<th class="head"><p>Severity</p></th>
 <th class="head"><p>Category</p></th>
 <th class="head"><p>Purpose</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL001</span></code></p></td>
+<td><p>warning</p></td>
 <td><p>performance</p></td>
 <td><p>flags tiny Parquet row groups</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL002</span></code></p></td>
+<td><p>warning</p></td>
 <td><p>metadata</p></td>
 <td><p>flags Parquet column chunks missing statistics</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL003</span></code></p></td>
+<td><p>error</p></td>
 <td><p>schema</p></td>
 <td><p>flags schema drift across files in one target</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL004</span></code></p></td>
+<td><p>info</p></td>
 <td><p>metadata</p></td>
 <td><p>reports missing Arrow schema metadata</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL005</span></code></p></td>
+<td><p>warning</p></td>
 <td><p>interoperability</p></td>
 <td><p>flags timestamp choices that may not round-trip cleanly</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL006</span></code></p></td>
+<td><p>warning</p></td>
 <td><p>encoding</p></td>
 <td><p>flags mixed dictionary encoding strategy</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL007</span></code></p></td>
+<td><p>info</p></td>
 <td><p>performance</p></td>
 <td><p>reports many small files</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL008</span></code></p></td>
+<td><p>warning</p></td>
 <td><p>performance</p></td>
 <td><p>flags uncompressed Parquet columns</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL100</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL009</span></code></p></td>
+<td><p>warning</p></td>
+<td><p>interoperability</p></td>
+<td><p>flags the deprecated Parquet <code class="docutils literal notranslate"><span class="pre">INT96</span></code> physical type</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL010</span></code></p></td>
+<td><p>warning</p></td>
+<td><p>interoperability</p></td>
+<td><p>flags deprecated Parquet encodings</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL011</span></code></p></td>
+<td><p>warning</p></td>
+<td><p>interoperability</p></td>
+<td><p>flags the deprecated Parquet <code class="docutils literal notranslate"><span class="pre">LZ4</span></code> codec</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL012</span></code></p></td>
+<td><p>error</p></td>
+<td><p>correctness</p></td>
+<td><p>flags impossible Parquet statistic counts</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL013</span></code></p></td>
+<td><p>error</p></td>
+<td><p>correctness</p></td>
+<td><p>flags inconsistent Parquet file and row-group counts</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL014</span></code></p></td>
+<td><p>warning</p></td>
+<td><p>metadata</p></td>
+<td><p>flags statistics that omit explicit null counts</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL015</span></code></p></td>
+<td><p>error</p></td>
+<td><p>correctness</p></td>
+<td><p>flags negative Parquet counts and byte sizes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL100</span></code></p></td>
+<td><p>info</p></td>
 <td><p>extension</p></td>
 <td><p>identifies inputs handled by external format packs</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<section id="parquet-validity-and-compatibility">
+<h2>Parquet Validity and Compatibility<a class="headerlink" href="#parquet-validity-and-compatibility" title="Link to this heading">#</a></h2>
+<section id="al009-deprecated-parquet-physical-types">
+<h3><code class="docutils literal notranslate"><span class="pre">AL009</span></code> — Deprecated Parquet Physical Types<a class="headerlink" href="#al009-deprecated-parquet-physical-types" title="Link to this heading">#</a></h3>
+<p>Reports each Parquet column chunk whose physical type is <code class="docutils literal notranslate"><span class="pre">INT96</span></code>. The Parquet
+format explicitly deprecates <code class="docutils literal notranslate"><span class="pre">INT96</span></code> and directs new writers not to emit it.
+Rewrite timestamp columns as <code class="docutils literal notranslate"><span class="pre">INT64</span></code> with a <code class="docutils literal notranslate"><span class="pre">TIMESTAMP</span></code> logical annotation.</p>
+<p>This rule is a warning because existing readers commonly support legacy
+<code class="docutils literal notranslate"><span class="pre">INT96</span></code> files, even though new files should not use the type.</p>
+<p>Reference: <a class="reference external" href="https://parquet.apache.org/docs/file-format/types/">Parquet physical types</a></p>
+</section>
+<section id="al010-deprecated-parquet-encodings">
+<h3><code class="docutils literal notranslate"><span class="pre">AL010</span></code> — Deprecated Parquet Encodings<a class="headerlink" href="#al010-deprecated-parquet-encodings" title="Link to this heading">#</a></h3>
+<p>Reports column chunks whose encoding set contains:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">PLAIN_DICTIONARY</span></code>, which has been superseded by <code class="docutils literal notranslate"><span class="pre">RLE_DICTIONARY</span></code> for data
+pages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BIT_PACKED</span></code>, which has been superseded by the hybrid <code class="docutils literal notranslate"><span class="pre">RLE</span></code> encoding for
+repetition and definition levels.</p></li>
+</ul>
+<p>The diagnostic identifies the row group, column path, and all deprecated
+encodings found in that column chunk. Rewrite the file with a current Parquet
+writer rather than changing reader configuration.</p>
+<p>Reference: <a class="reference external" href="https://parquet.apache.org/docs/file-format/data-pages/encodings/">Parquet encoding definitions</a></p>
+</section>
+<section id="al011-deprecated-parquet-compression">
+<h3><code class="docutils literal notranslate"><span class="pre">AL011</span></code> — Deprecated Parquet Compression<a class="headerlink" href="#al011-deprecated-parquet-compression" title="Link to this heading">#</a></h3>
+<p>Reports column chunks using the deprecated <code class="docutils literal notranslate"><span class="pre">LZ4</span></code> codec. <code class="docutils literal notranslate"><span class="pre">LZ4</span></code> and <code class="docutils literal notranslate"><span class="pre">LZ4_RAW</span></code> are
+different Parquet codec identifiers: this rule does not report <code class="docutils literal notranslate"><span class="pre">LZ4_RAW</span></code>.
+Rewrite affected columns with <code class="docutils literal notranslate"><span class="pre">LZ4_RAW</span></code>, <code class="docutils literal notranslate"><span class="pre">ZSTD</span></code>, or <code class="docutils literal notranslate"><span class="pre">SNAPPY</span></code>, based on the
+required reader compatibility and workload.</p>
+<p>Reference: <a class="reference external" href="https://github.com/apache/parquet-format/blob/master/Compression.md">Parquet compression codecs</a></p>
+</section>
+<section id="al012-invalid-parquet-statistics">
+<h3><code class="docutils literal notranslate"><span class="pre">AL012</span></code> — Invalid Parquet Statistics<a class="headerlink" href="#al012-invalid-parquet-statistics" title="Link to this heading">#</a></h3>
+<p>Reports impossible count metadata as an error:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">null_count</span></code> greater than the column chunk’s <code class="docutils literal notranslate"><span class="pre">num_values</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distinct_count</span></code> greater than the column chunk’s <code class="docutils literal notranslate"><span class="pre">num_values</span></code>.</p></li>
+</ul>
+<p>Readers use statistics for predicate pruning. Impossible counts indicate
+corrupt or incorrectly produced metadata and should not be trusted. Rewrite
+the file before using its statistics for query planning.</p>
+<p>Reference: <a class="reference external" href="https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift">Parquet <code class="docutils literal notranslate"><span class="pre">Statistics</span></code> definition</a></p>
+</section>
+<section id="al013-inconsistent-parquet-row-counts">
+<h3><code class="docutils literal notranslate"><span class="pre">AL013</span></code> — Inconsistent Parquet Row Counts<a class="headerlink" href="#al013-inconsistent-parquet-row-counts" title="Link to this heading">#</a></h3>
+<p>Reports a file when <code class="docutils literal notranslate"><span class="pre">FileMetaData.num_rows</span></code> differs from the sum of
+<code class="docutils literal notranslate"><span class="pre">RowGroup.num_rows</span></code>, or when that sum exceeds the signed 64-bit metadata range.
+The rule does not run the comparison when a row group has a negative count;
+<code class="docutils literal notranslate"><span class="pre">AL015</span></code> reports that more fundamental error instead.</p>
+<p>This diagnostic is an error because both metadata locations describe the same
+rows and must agree.</p>
+<p>Reference: <a class="reference external" href="https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift">Parquet metadata definition</a></p>
+</section>
+<section id="al014-missing-parquet-null-counts">
+<h3><code class="docutils literal notranslate"><span class="pre">AL014</span></code> — Missing Parquet Null Counts<a class="headerlink" href="#al014-missing-parquet-null-counts" title="Link to this heading">#</a></h3>
+<p>Reports a column chunk that has a statistics structure but does not include
+<code class="docutils literal notranslate"><span class="pre">null_count</span></code>. The Parquet specification recommends writing this field even
+when the count is zero or the column is required. Readers must distinguish a
+missing count from a known zero count.</p>
+<p>This rule does not report column chunks with no statistics at all; <code class="docutils literal notranslate"><span class="pre">AL002</span></code>
+handles that case.</p>
+<p>Reference: <a class="reference external" href="https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift">Parquet <code class="docutils literal notranslate"><span class="pre">Statistics.null_count</span></code></a></p>
+</section>
+<section id="al015-invalid-parquet-size-metadata">
+<h3><code class="docutils literal notranslate"><span class="pre">AL015</span></code> — Invalid Parquet Size Metadata<a class="headerlink" href="#al015-invalid-parquet-size-metadata" title="Link to this heading">#</a></h3>
+<p>Reports negative values in metadata fields that represent counts or sizes:</p>
+<ul class="simple">
+<li><p>File and row-group row counts.</p></li>
+<li><p>Row-group uncompressed byte sizes.</p></li>
+<li><p>Column-chunk value counts.</p></li>
+<li><p>Column-chunk compressed and uncompressed byte sizes.</p></li>
+</ul>
+<p>Zero remains valid for empty files, empty row groups, and empty column chunks.
+Negative values are structurally invalid and are reported as errors.</p>
+<p>Reference: <a class="reference external" href="https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift">Parquet metadata structures</a></p>
+</section>
+</section>
+<section id="rule-scope">
+<h2>Rule Scope<a class="headerlink" href="#rule-scope" title="Link to this heading">#</a></h2>
+<p>The new validity checks are metadata-only. They do not decode data pages or
+compare stored statistics with every physical value. A clean result therefore
+means the inspected footer metadata is internally consistent; it does not
+prove that the complete file contents are uncorrupted.</p>
+</section>
 <section id="declarative-rules">
 <h2>Declarative Rules<a class="headerlink" href="#declarative-rules" title="Link to this heading">#</a></h2>
 <p>Use declarative YAML rules for simple metadata checks:</p>
