@@ -14,6 +14,8 @@ def test_rules_cli_lists_builtin_rules(capsys: CaptureFixture[str]) -> None:
     assert result == 0
     assert "AL001" in captured.out
     assert "tiny-row-groups" in captured.out
+    assert "AL015" in captured.out
+    assert "invalid-parquet-size-metadata" in captured.out
 
 
 def test_diff_cli_renders_text(

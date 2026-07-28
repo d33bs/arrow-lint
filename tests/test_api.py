@@ -10,8 +10,14 @@ from arrow_lint.api import diff, formats, rules
 
 def test_rules_exposes_builtin_metadata() -> None:
     builtin_rules = rules()
+    rules_by_id = {rule["id"]: rule for rule in builtin_rules}
 
-    assert any(rule["id"] == "AL003" for rule in builtin_rules)
+    assert rules_by_id["AL003"]["default_severity"] == "error"
+    assert set(rules_by_id).issuperset(
+        {"AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015"}
+    )
+    assert rules_by_id["AL012"]["default_severity"] == "error"
+    assert rules_by_id["AL014"]["default_severity"] == "warning"
 
 
 def test_formats_exposes_extension_targets() -> None:

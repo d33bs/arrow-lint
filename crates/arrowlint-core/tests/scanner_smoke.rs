@@ -7,7 +7,7 @@ use arrow::{
     record_batch::RecordBatch,
 };
 use arrowlint_core::{lint_paths, LintConfig};
-use parquet::{arrow::ArrowWriter, file::properties::WriterProperties};
+use parquet::{arrow::ArrowWriter, basic::Compression, file::properties::WriterProperties};
 use tempfile::tempdir;
 
 #[test]
@@ -49,6 +49,50 @@ fn scans_parquet_and_flags_tiny_row_group() -> anyhow::Result<()> {
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.rule_id == "AL001"));
+    Ok(())
+}
+
+#[test]
+fn scans_deprecated_parquet_compression() -> anyhow::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("deprecated-compression.parquet");
+    let batch = record_batch()?;
+    let properties = WriterProperties::builder()
+        .set_compression(Compression::LZ4)
+        .build();
+    let mut writer = ArrowWriter::try_new(File::create(&path)?, batch.schema(), Some(properties))?;
+    writer.write(&batch)?;
+    writer.close()?;
+
+    let report = lint_paths(&[path], LintConfig::default())?;
+
+    assert!(report
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.rule_id == "AL011"));
+    Ok(())
+}
+
+#[test]
+fn disabled_parquet_rule_is_removed_from_report() -> anyhow::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("deprecated-compression.parquet");
+    let batch = record_batch()?;
+    let properties = WriterProperties::builder()
+        .set_compression(Compression::LZ4)
+        .build();
+    let mut writer = ArrowWriter::try_new(File::create(&path)?, batch.schema(), Some(properties))?;
+    writer.write(&batch)?;
+    writer.close()?;
+    let mut config = LintConfig::default();
+    config.rules.disabled.insert("AL011".to_string());
+
+    let report = lint_paths(&[path], config)?;
+
+    assert!(!report
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.rule_id == "AL011"));
     Ok(())
 }
 

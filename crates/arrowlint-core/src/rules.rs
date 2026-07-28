@@ -28,6 +28,13 @@ pub fn builtin_registry() -> RuleRegistry {
     registry.register(MixedDictionaryEncodings);
     registry.register(SmallFiles);
     registry.register(UncompressedParquetColumns);
+    registry.register(DeprecatedParquetPhysicalTypes);
+    registry.register(DeprecatedParquetEncodings);
+    registry.register(DeprecatedParquetCompression);
+    registry.register(InvalidParquetStatistics);
+    registry.register(InconsistentParquetRowCounts);
+    registry.register(MissingParquetNullCounts);
+    registry.register(InvalidParquetSizeMetadata);
     registry.register(RecognizedExtensionFormat);
     registry
 }
@@ -423,6 +430,436 @@ impl Rule for UncompressedParquetColumns {
     }
 }
 
+struct DeprecatedParquetPhysicalTypes;
+
+impl Rule for DeprecatedParquetPhysicalTypes {
+    fn metadata(&self) -> RuleMetadata {
+        RuleMetadata {
+            id: "AL009",
+            name: "deprecated-parquet-physical-types",
+            category: "interoperability",
+            default_severity: Severity::Warning,
+            summary: "Parquet files should not use deprecated physical types.",
+        }
+    }
+
+    fn check(&self, dataset: &Dataset, _config: &LintConfig) -> Vec<Diagnostic> {
+        dataset
+            .files
+            .iter()
+            .filter(|file| file.format == Format::Parquet)
+            .flat_map(|file| {
+                file.row_groups.iter().flat_map(|group| {
+                    group
+                        .columns
+                        .iter()
+                        .filter(|column| column.physical_type == "INT96")
+                        .map(|column| {
+                            Diagnostic::new(
+                                "AL009",
+                                Severity::Warning,
+                                "interoperability",
+                                format!(
+                                    "column `{}` uses the deprecated INT96 physical type",
+                                    column.path
+                                ),
+                            )
+                            .with_path(file.path.clone())
+                            .with_location(format!(
+                                "row_group={},column={}",
+                                group.ordinal, column.path
+                            ))
+                            .with_help(
+                                "rewrite timestamps as INT64 with a TIMESTAMP logical annotation",
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                })
+            })
+            .collect()
+    }
+}
+
+struct DeprecatedParquetEncodings;
+
+impl Rule for DeprecatedParquetEncodings {
+    fn metadata(&self) -> RuleMetadata {
+        RuleMetadata {
+            id: "AL010",
+            name: "deprecated-parquet-encodings",
+            category: "interoperability",
+            default_severity: Severity::Warning,
+            summary: "Parquet files should not use deprecated encodings.",
+        }
+    }
+
+    fn check(&self, dataset: &Dataset, _config: &LintConfig) -> Vec<Diagnostic> {
+        dataset
+            .files
+            .iter()
+            .filter(|file| file.format == Format::Parquet)
+            .flat_map(|file| {
+                file.row_groups.iter().flat_map(|group| {
+                    group.columns.iter().filter_map(|column| {
+                        let deprecated = column
+                            .encodings
+                            .iter()
+                            .filter(|encoding| {
+                                matches!(encoding.as_str(), "PLAIN_DICTIONARY" | "BIT_PACKED")
+                            })
+                            .cloned()
+                            .collect::<BTreeSet<_>>();
+                        if deprecated.is_empty() {
+                            return None;
+                        }
+
+                        Some(
+                            Diagnostic::new(
+                                "AL010",
+                                Severity::Warning,
+                                "interoperability",
+                                format!(
+                                    "column `{}` uses deprecated encoding(s): {}",
+                                    column.path,
+                                    deprecated.into_iter().collect::<Vec<_>>().join(", ")
+                                ),
+                            )
+                            .with_path(file.path.clone())
+                            .with_location(format!(
+                                "row_group={},column={}",
+                                group.ordinal, column.path
+                            ))
+                            .with_help(
+                                "rewrite with RLE_DICTIONARY for dictionary data and RLE for levels",
+                            ),
+                        )
+                    })
+                })
+            })
+            .collect()
+    }
+}
+
+struct DeprecatedParquetCompression;
+
+impl Rule for DeprecatedParquetCompression {
+    fn metadata(&self) -> RuleMetadata {
+        RuleMetadata {
+            id: "AL011",
+            name: "deprecated-parquet-compression",
+            category: "interoperability",
+            default_severity: Severity::Warning,
+            summary: "Parquet files should not use deprecated compression codecs.",
+        }
+    }
+
+    fn check(&self, dataset: &Dataset, _config: &LintConfig) -> Vec<Diagnostic> {
+        dataset
+            .files
+            .iter()
+            .filter(|file| file.format == Format::Parquet)
+            .flat_map(|file| {
+                file.row_groups.iter().flat_map(|group| {
+                    group
+                        .columns
+                        .iter()
+                        .filter(|column| column.compression == "LZ4")
+                        .map(|column| {
+                            Diagnostic::new(
+                                "AL011",
+                                Severity::Warning,
+                                "interoperability",
+                                format!("column `{}` uses the deprecated LZ4 codec", column.path),
+                            )
+                            .with_path(file.path.clone())
+                            .with_location(format!(
+                                "row_group={},column={}",
+                                group.ordinal, column.path
+                            ))
+                            .with_help(
+                                "rewrite with LZ4_RAW, ZSTD, or SNAPPY for broad reader support",
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                })
+            })
+            .collect()
+    }
+}
+
+struct InvalidParquetStatistics;
+
+impl Rule for InvalidParquetStatistics {
+    fn metadata(&self) -> RuleMetadata {
+        RuleMetadata {
+            id: "AL012",
+            name: "invalid-parquet-statistics",
+            category: "correctness",
+            default_severity: Severity::Error,
+            summary: "Parquet statistic counts must not exceed the column value count.",
+        }
+    }
+
+    fn check(&self, dataset: &Dataset, _config: &LintConfig) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+        for file in dataset
+            .files
+            .iter()
+            .filter(|file| file.format == Format::Parquet)
+        {
+            for group in &file.row_groups {
+                for column in &group.columns {
+                    let Ok(num_values) = u64::try_from(column.num_values) else {
+                        continue;
+                    };
+                    let Some(statistics) = &column.statistics else {
+                        continue;
+                    };
+
+                    for (name, count) in [
+                        ("null_count", statistics.null_count),
+                        ("distinct_count", statistics.distinct_count),
+                    ] {
+                        let Some(count) = count else {
+                            continue;
+                        };
+                        if count > num_values {
+                            diagnostics.push(
+                                Diagnostic::new(
+                                    "AL012",
+                                    Severity::Error,
+                                    "correctness",
+                                    format!(
+                                        "{name} {} exceeds num_values {num_values} for column `{}`",
+                                        count, column.path
+                                    ),
+                                )
+                                .with_path(file.path.clone())
+                                .with_location(format!(
+                                    "row_group={},column={}",
+                                    group.ordinal, column.path
+                                ))
+                                .with_help(
+                                    "rewrite the file with correct statistics before relying on predicate pruning",
+                                ),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        diagnostics
+    }
+}
+
+struct InconsistentParquetRowCounts;
+
+impl Rule for InconsistentParquetRowCounts {
+    fn metadata(&self) -> RuleMetadata {
+        RuleMetadata {
+            id: "AL013",
+            name: "inconsistent-parquet-row-counts",
+            category: "correctness",
+            default_severity: Severity::Error,
+            summary: "The Parquet file row count must equal the sum of its row groups.",
+        }
+    }
+
+    fn check(&self, dataset: &Dataset, _config: &LintConfig) -> Vec<Diagnostic> {
+        dataset
+            .files
+            .iter()
+            .filter(|file| file.format == Format::Parquet)
+            .filter_map(|file| {
+                let expected = file.num_rows?;
+                if file.row_groups.iter().any(|group| group.num_rows < 0) {
+                    return None;
+                }
+                let Some(actual) = file
+                    .row_groups
+                    .iter()
+                    .map(|group| group.num_rows)
+                    .try_fold(0_i64, i64::checked_add)
+                else {
+                    return Some(
+                        Diagnostic::new(
+                            "AL013",
+                            Severity::Error,
+                            "correctness",
+                            "row-group row counts overflow the Parquet metadata range",
+                        )
+                        .with_path(file.path.clone())
+                        .with_help(
+                            "rewrite the file so file-level and row-group row counts are consistent",
+                        ),
+                    );
+                };
+                if expected == actual {
+                    return None;
+                }
+
+                Some(
+                    Diagnostic::new(
+                        "AL013",
+                        Severity::Error,
+                        "correctness",
+                        format!(
+                            "file metadata reports {expected} rows but row groups sum to {actual}"
+                        ),
+                    )
+                    .with_path(file.path.clone())
+                    .with_help(
+                        "rewrite the file so file-level and row-group row counts are consistent",
+                    ),
+                )
+            })
+            .collect()
+    }
+}
+
+struct MissingParquetNullCounts;
+
+impl Rule for MissingParquetNullCounts {
+    fn metadata(&self) -> RuleMetadata {
+        RuleMetadata {
+            id: "AL014",
+            name: "missing-parquet-null-counts",
+            category: "metadata",
+            default_severity: Severity::Warning,
+            summary: "Parquet statistics should explicitly include null counts.",
+        }
+    }
+
+    fn check(&self, dataset: &Dataset, _config: &LintConfig) -> Vec<Diagnostic> {
+        dataset
+            .files
+            .iter()
+            .filter(|file| file.format == Format::Parquet)
+            .flat_map(|file| {
+                file.row_groups.iter().flat_map(|group| {
+                    group
+                        .columns
+                        .iter()
+                        .filter(|column| {
+                            column
+                                .statistics
+                                .as_ref()
+                                .is_some_and(|statistics| statistics.null_count.is_none())
+                        })
+                        .map(|column| {
+                            Diagnostic::new(
+                                "AL014",
+                                Severity::Warning,
+                                "metadata",
+                                format!(
+                                    "statistics for column `{}` omit null_count",
+                                    column.path
+                                ),
+                            )
+                            .with_path(file.path.clone())
+                            .with_location(format!(
+                                "row_group={},column={}",
+                                group.ordinal, column.path
+                            ))
+                            .with_help(
+                                "configure the writer to record null_count, including when it is zero",
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                })
+            })
+            .collect()
+    }
+}
+
+struct InvalidParquetSizeMetadata;
+
+impl Rule for InvalidParquetSizeMetadata {
+    fn metadata(&self) -> RuleMetadata {
+        RuleMetadata {
+            id: "AL015",
+            name: "invalid-parquet-size-metadata",
+            category: "correctness",
+            default_severity: Severity::Error,
+            summary: "Parquet row, value, and byte counts must not be negative.",
+        }
+    }
+
+    fn check(&self, dataset: &Dataset, _config: &LintConfig) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+        for file in dataset
+            .files
+            .iter()
+            .filter(|file| file.format == Format::Parquet)
+        {
+            if file.num_rows.is_some_and(|num_rows| num_rows < 0) {
+                diagnostics.push(
+                    Diagnostic::new(
+                        "AL015",
+                        Severity::Error,
+                        "correctness",
+                        "file row count is negative",
+                    )
+                    .with_path(file.path.clone())
+                    .with_help("rewrite the file with valid non-negative metadata counts"),
+                );
+            }
+
+            for group in &file.row_groups {
+                for (name, value) in [
+                    ("num_rows", group.num_rows),
+                    ("total_byte_size", group.total_byte_size),
+                ] {
+                    if value < 0 {
+                        diagnostics.push(
+                            Diagnostic::new(
+                                "AL015",
+                                Severity::Error,
+                                "correctness",
+                                format!("row group {} has negative {name}: {value}", group.ordinal),
+                            )
+                            .with_path(file.path.clone())
+                            .with_location(format!("row_group={}", group.ordinal))
+                            .with_help("rewrite the file with valid non-negative metadata counts"),
+                        );
+                    }
+                }
+
+                for column in &group.columns {
+                    for (name, value) in [
+                        ("num_values", column.num_values),
+                        ("compressed_size", column.compressed_size),
+                        ("uncompressed_size", column.uncompressed_size),
+                    ] {
+                        if value < 0 {
+                            diagnostics.push(
+                                Diagnostic::new(
+                                    "AL015",
+                                    Severity::Error,
+                                    "correctness",
+                                    format!(
+                                        "column `{}` has negative {name}: {value}",
+                                        column.path
+                                    ),
+                                )
+                                .with_path(file.path.clone())
+                                .with_location(format!(
+                                    "row_group={},column={}",
+                                    group.ordinal, column.path
+                                ))
+                                .with_help(
+                                    "rewrite the file with valid non-negative metadata counts",
+                                ),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        diagnostics
+    }
+}
+
 struct RecognizedExtensionFormat;
 
 impl Rule for RecognizedExtensionFormat {
@@ -473,7 +910,9 @@ mod tests {
     use std::collections::BTreeMap;
 
     use crate::{
-        dataset::{DatasetFile, FieldModel},
+        dataset::{
+            ColumnChunkModel, ColumnStatisticsModel, DatasetFile, FieldModel, RowGroupModel,
+        },
         LintConfig,
     };
 
@@ -512,6 +951,241 @@ mod tests {
         assert_eq!(diagnostic.severity, Severity::Info);
     }
 
+    #[test]
+    fn deprecated_parquet_features_are_reported() {
+        let dataset = parquet_dataset(
+            Some(1),
+            vec![row_group(
+                1,
+                128,
+                vec![column(
+                    "created_at",
+                    "INT96",
+                    "LZ4",
+                    &["PLAIN_DICTIONARY", "BIT_PACKED"],
+                    1,
+                    64,
+                    128,
+                    Some(statistics(Some(0), Some(1))),
+                )],
+            )],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+
+        for rule_id in ["AL009", "AL010", "AL011"] {
+            assert!(
+                diagnostics
+                    .iter()
+                    .any(|diagnostic| diagnostic.rule_id == rule_id),
+                "{rule_id} should report the deprecated Parquet feature"
+            );
+        }
+    }
+
+    #[test]
+    fn impossible_parquet_statistics_are_errors() {
+        let dataset = parquet_dataset(
+            Some(10),
+            vec![row_group(
+                10,
+                128,
+                vec![column(
+                    "id",
+                    "INT64",
+                    "ZSTD",
+                    &["PLAIN"],
+                    10,
+                    64,
+                    128,
+                    Some(statistics(Some(11), Some(12))),
+                )],
+            )],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+        let invalid_statistics = diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic.rule_id == "AL012")
+            .collect::<Vec<_>>();
+
+        assert_eq!(invalid_statistics.len(), 2);
+        assert!(invalid_statistics
+            .iter()
+            .all(|diagnostic| diagnostic.severity == Severity::Error));
+    }
+
+    #[test]
+    fn inconsistent_parquet_row_total_is_an_error() {
+        let dataset = parquet_dataset(
+            Some(10),
+            vec![row_group(4, 64, vec![]), row_group(5, 64, vec![])],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+        let diagnostic = diagnostics
+            .iter()
+            .find(|diagnostic| diagnostic.rule_id == "AL013")
+            .expect("AL013 should report inconsistent row totals");
+
+        assert_eq!(diagnostic.severity, Severity::Error);
+    }
+
+    #[test]
+    fn overflowing_parquet_row_total_is_an_error() {
+        let dataset = parquet_dataset(
+            Some(i64::MAX),
+            vec![row_group(i64::MAX, 64, vec![]), row_group(1, 64, vec![])],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+
+        assert!(diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.rule_id == "AL013"));
+    }
+
+    #[test]
+    fn missing_parquet_null_count_is_reported() {
+        let dataset = parquet_dataset(
+            Some(1),
+            vec![row_group(
+                1,
+                128,
+                vec![column(
+                    "id",
+                    "INT64",
+                    "ZSTD",
+                    &["PLAIN"],
+                    1,
+                    64,
+                    128,
+                    Some(statistics(None, Some(1))),
+                )],
+            )],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+
+        assert!(diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.rule_id == "AL014"));
+    }
+
+    #[test]
+    fn negative_parquet_metadata_is_an_error() {
+        let dataset = parquet_dataset(
+            Some(1),
+            vec![row_group(
+                -1,
+                -128,
+                vec![column(
+                    "id",
+                    "INT64",
+                    "ZSTD",
+                    &["PLAIN"],
+                    -1,
+                    -64,
+                    -128,
+                    None,
+                )],
+            )],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+        let invalid_metadata = diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic.rule_id == "AL015")
+            .collect::<Vec<_>>();
+
+        assert_eq!(invalid_metadata.len(), 5);
+        assert!(invalid_metadata
+            .iter()
+            .all(|diagnostic| diagnostic.severity == Severity::Error));
+    }
+
+    #[test]
+    fn valid_modern_parquet_metadata_does_not_trigger_new_rules() {
+        let dataset = parquet_dataset(
+            Some(10),
+            vec![row_group(
+                10,
+                128,
+                vec![column(
+                    "id",
+                    "INT64",
+                    "LZ4_RAW",
+                    &["PLAIN", "RLE_DICTIONARY", "RLE"],
+                    10,
+                    64,
+                    128,
+                    Some(statistics(Some(10), Some(10))),
+                )],
+            )],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+        let new_rule_ids = diagnostics
+            .iter()
+            .filter_map(|diagnostic| {
+                let numeric_id = diagnostic.rule_id.strip_prefix("AL")?.parse::<u16>().ok()?;
+                (9..=15)
+                    .contains(&numeric_id)
+                    .then_some(diagnostic.rule_id.as_str())
+            })
+            .collect::<Vec<_>>();
+
+        assert!(
+            new_rule_ids.is_empty(),
+            "unexpected rules: {new_rule_ids:?}"
+        );
+    }
+
+    #[test]
+    fn absent_statistics_do_not_duplicate_missing_null_count_diagnostic() {
+        let dataset = parquet_dataset(
+            Some(1),
+            vec![row_group(
+                1,
+                128,
+                vec![column("id", "INT64", "ZSTD", &["PLAIN"], 1, 64, 128, None)],
+            )],
+        );
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+
+        assert!(diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.rule_id == "AL002"));
+        assert!(!diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.rule_id == "AL014"));
+    }
+
+    #[test]
+    fn negative_file_row_count_is_an_error() {
+        let dataset = parquet_dataset(Some(-1), Vec::new());
+
+        let diagnostics = builtin_registry().check(&dataset, &LintConfig::default());
+
+        assert!(diagnostics.iter().any(|diagnostic| {
+            diagnostic.rule_id == "AL015" && diagnostic.message == "file row count is negative"
+        }));
+    }
+
+    #[test]
+    fn builtin_rule_ids_are_unique_and_include_parquet_validity_rules() {
+        let metadata = builtin_registry().metadata();
+        let ids = metadata.iter().map(|rule| rule.id).collect::<BTreeSet<_>>();
+
+        assert_eq!(ids.len(), metadata.len());
+        for rule_id in [
+            "AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015",
+        ] {
+            assert!(ids.contains(rule_id), "{rule_id} should be registered");
+        }
+    }
+
     fn file_with_schema(path: &str, field_name: &str, data_type: &str) -> DatasetFile {
         DatasetFile {
             path: path.to_string(),
@@ -533,6 +1207,73 @@ mod tests {
             }),
             metadata: BTreeMap::new(),
             row_groups: Vec::new(),
+        }
+    }
+
+    fn parquet_dataset(num_rows: Option<i64>, row_groups: Vec<RowGroupModel>) -> Dataset {
+        Dataset {
+            schema: None,
+            files: vec![DatasetFile {
+                path: "example.parquet".to_string(),
+                format: Format::Parquet,
+                size_bytes: 256,
+                num_rows,
+                schema: None,
+                metadata: BTreeMap::new(),
+                row_groups,
+            }],
+        }
+    }
+
+    fn row_group(
+        num_rows: i64,
+        total_byte_size: i64,
+        columns: Vec<ColumnChunkModel>,
+    ) -> RowGroupModel {
+        RowGroupModel {
+            ordinal: 0,
+            num_rows,
+            total_byte_size,
+            columns,
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn column(
+        path: &str,
+        physical_type: &str,
+        compression: &str,
+        encodings: &[&str],
+        num_values: i64,
+        compressed_size: i64,
+        uncompressed_size: i64,
+        statistics: Option<ColumnStatisticsModel>,
+    ) -> ColumnChunkModel {
+        ColumnChunkModel {
+            path: path.to_string(),
+            physical_type: physical_type.to_string(),
+            logical_type: None,
+            compression: compression.to_string(),
+            encodings: encodings
+                .iter()
+                .map(|encoding| (*encoding).to_string())
+                .collect(),
+            has_statistics: statistics.is_some(),
+            statistics,
+            num_values,
+            compressed_size,
+            uncompressed_size,
+        }
+    }
+
+    fn statistics(null_count: Option<u64>, distinct_count: Option<u64>) -> ColumnStatisticsModel {
+        ColumnStatisticsModel {
+            min_hex: None,
+            max_hex: None,
+            null_count,
+            distinct_count,
+            min_is_exact: false,
+            max_is_exact: false,
         }
     }
 }
