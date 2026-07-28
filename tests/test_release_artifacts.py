@@ -45,7 +45,7 @@ def test_release_artifacts_accept_matching_python_tag() -> None:
 
 
 def test_release_artifacts_reject_mismatched_python_tag() -> None:
-    with pytest.raises(SystemExit, match="does not match matrix Python 3.12"):
+    with pytest.raises(SystemExit, match=r"does not match matrix Python 3\.12"):
         validate_wheel_python(
             "arrow_lint-0.0.3-cp311-cp311-manylinux_2_28_x86_64.whl",
             "3.12",

@@ -15,10 +15,10 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dynamic = [ "version" ]
-dependencies = [
-]
+dependencies = []
 scripts.arrow-lint = "arrow_lint.cli:trigger"
 scripts.arrowdiff = "arrow_lint.cli:trigger_diff"
 
@@ -37,13 +37,13 @@ docs = [
 ]
 
 [tool.maturin]
-manifest-path = "crates/arrowlint-python/Cargo.toml"
 module-name = "arrow_lint._native"
 python-source = "src"
-features = [ "pyo3/extension-module" ]
+manifest-path = "crates/arrowlint-python/Cargo.toml"
 include = [
   { path = "LICENSE", format = "sdist" },
 ]
+features = [ "pyo3/extension-module" ]
 
 [tool.ruff]
 target-version = "py311"
@@ -74,41 +74,42 @@ lint.select = [
 ]
 # Ignore `F401` (unused imports) for `__init__.py` file
 lint.per-file-ignores."__init__.py" = [ "F401" ]
+# Ignore `PLC0415` (import not at top-level) for `api.py`, which defers the
+# native extension import so the pure-Python package stays importable.
+lint.per-file-ignores."src/arrow_lint/api.py" = [ "PLC0415" ]
 
-[tool.pytest.ini_options]
-pythonpath = [ "." ]
-addopts = [
+[tool.vulture]
+paths = [ "src/arrow_lint", "tests" ]
+min_confidence = 90
+
+[tool.pytest]
+ini_options.pythonpath = [ "." ]
+ini_options.addopts = [
   "--cov=arrow_lint",
   "--cov-report=term-missing",
   "--cov-report=xml",
 ]
 
-[tool.coverage.run]
-branch = true
-source = [ "src/arrow_lint" ]
+[tool.coverage]
+run.branch = true
+run.source = [ "src/arrow_lint" ]
+report.show_missing = true
+report.skip_covered = true
 
-[tool.coverage.report]
-show_missing = true
-skip_covered = true
-
-[tool.poe.tasks]
+[tool.poe]
 # tasks for development environments
-develop.shell = """
+tasks.develop.shell = """
 maturin develop
 """
-rust-test.shell = """
+tasks.rust-test.shell = """
 cargo test
 """
-test.shell = """
+tasks.test.shell = """
 maturin develop && pytest
 """
-lint.shell = """
+tasks.lint.shell = """
 prek run --all-files
 """
-pipeline.shell = """
+tasks.pipeline.shell = """
 cargo test && maturin develop && prek run --all-files && pytest
 """
-
-[tool.vulture]
-min_confidence = 90
-paths = [ "src/arrow_lint", "tests" ]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -52,8 +53,6 @@ def cargo_package_version(package_name: str) -> str:
         ["cargo", "metadata", "--no-deps", "--format-version", "1"],
         text=True,
     )
-    import json
-
     metadata = json.loads(output)
     for package in metadata["packages"]:
         if package["name"] == package_name:
