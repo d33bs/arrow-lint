@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use arrowlint_core::{format_packs, lint_paths, list_builtin_rules, LintConfig, OutputFormat};
+use arrowlint_core::{
+    diff_paths, format_packs, lint_paths, list_builtin_rules, LintConfig, OutputFormat,
+};
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Debug, Parser)]
@@ -30,6 +32,14 @@ enum Command {
         #[arg(long, value_enum, default_value_t = Output::Text)]
         output: Output,
     },
+    Diff {
+        old: PathBuf,
+        new: PathBuf,
+        #[arg(long, value_enum, default_value_t = DiffOutput::Text)]
+        output: DiffOutput,
+        #[arg(long)]
+        exit_code: bool,
+    },
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -37,6 +47,12 @@ enum Output {
     Text,
     Json,
     Sarif,
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum DiffOutput {
+    Text,
+    Json,
 }
 
 fn main() -> Result<()> {
@@ -90,8 +106,29 @@ fn main() -> Result<()> {
                 }
             }
         },
+        Command::Diff {
+            old,
+            new,
+            output,
+            exit_code,
+        } => {
+            let report = diff_paths(&old, &new)?;
+            print!("{}", report.render(output.into())?);
+            if exit_code && report.has_changes() {
+                std::process::exit(1);
+            }
+        }
     }
     Ok(())
+}
+
+impl From<DiffOutput> for OutputFormat {
+    fn from(value: DiffOutput) -> Self {
+        match value {
+            DiffOutput::Text => Self::Text,
+            DiffOutput::Json => Self::Json,
+        }
+    }
 }
 
 impl From<Output> for OutputFormat {

@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use arrowlint_core::{format_packs, lint_paths, list_builtin_rules, LintConfig, OutputFormat};
+use arrowlint_core::{
+    diff_paths, format_packs, lint_paths, list_builtin_rules, LintConfig, OutputFormat,
+};
 use pyo3::{exceptions::PyRuntimeError, prelude::*};
 
 #[pyfunction]
@@ -34,6 +36,24 @@ fn formats_json() -> PyResult<String> {
     serde_json::to_string_pretty(&format_packs::known_format_packs()).map_err(to_py_error)
 }
 
+#[pyfunction]
+fn diff_paths_json(old_path: String, new_path: String) -> PyResult<String> {
+    let old_path = PathBuf::from(old_path);
+    let new_path = PathBuf::from(new_path);
+    let report = diff_paths(&old_path, &new_path).map_err(to_py_error)?;
+    serde_json::to_string_pretty(&report).map_err(to_py_error)
+}
+
+#[pyfunction]
+fn render_diff(old_path: String, new_path: String, output_format: String) -> PyResult<String> {
+    let old_path = PathBuf::from(old_path);
+    let new_path = PathBuf::from(new_path);
+    let report = diff_paths(&old_path, &new_path).map_err(to_py_error)?;
+    report
+        .render(OutputFormat::parse(&output_format))
+        .map_err(to_py_error)
+}
+
 fn load_config(config_path: Option<String>) -> PyResult<LintConfig> {
     match config_path {
         Some(path) => LintConfig::from_path(path).map_err(to_py_error),
@@ -51,5 +71,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(render_lint, module)?)?;
     module.add_function(wrap_pyfunction!(rules_json, module)?)?;
     module.add_function(wrap_pyfunction!(formats_json, module)?)?;
+    module.add_function(wrap_pyfunction!(diff_paths_json, module)?)?;
+    module.add_function(wrap_pyfunction!(render_diff, module)?)?;
     Ok(())
 }

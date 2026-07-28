@@ -15,7 +15,8 @@ use walkdir::WalkDir;
 use crate::{
     config::ScanConfig,
     dataset::{
-        ColumnChunkModel, Dataset, DatasetFile, FieldModel, Format, RowGroupModel, SchemaModel,
+        ColumnChunkModel, ColumnStatisticsModel, Dataset, DatasetFile, FieldModel, Format,
+        RowGroupModel, SchemaModel,
     },
 };
 
@@ -104,14 +105,25 @@ fn scan_parquet(path: &Path) -> Result<DatasetFile> {
             let columns = (0..group.num_columns())
                 .map(|column_index| {
                     let column = group.column(column_index);
+                    let statistics = column.statistics().map(|statistics| ColumnStatisticsModel {
+                        min_hex: statistics.min_bytes_opt().map(bytes_to_hex),
+                        max_hex: statistics.max_bytes_opt().map(bytes_to_hex),
+                        null_count: statistics.null_count_opt(),
+                        distinct_count: statistics.distinct_count_opt(),
+                        min_is_exact: statistics.min_is_exact(),
+                        max_is_exact: statistics.max_is_exact(),
+                    });
                     ColumnChunkModel {
                         path: column.column_path().string(),
                         physical_type: column.column_type().to_string(),
                         logical_type: None,
                         compression: column.compression().to_string(),
                         encodings: column.encodings().map(|value| value.to_string()).collect(),
-                        has_statistics: column.statistics().is_some(),
+                        has_statistics: statistics.is_some(),
+                        statistics,
                         num_values: column.num_values(),
+                        compressed_size: column.compressed_size(),
+                        uncompressed_size: column.uncompressed_size(),
                     }
                 })
                 .collect();
@@ -221,4 +233,8 @@ fn metadata_from_key_values(
                 .map(|value| (entry.key.clone(), value.clone()))
         })
         .collect()
+}
+
+fn bytes_to_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }

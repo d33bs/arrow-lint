@@ -12,6 +12,7 @@ a rule system designed for the Arrow ecosystem.
 - Scanners for Parquet, Arrow IPC, and Feather.
 - Python API and Python-first CLI.
 - Native Rust CLI for direct integration.
+- ArrowDiff metadata and statistics comparison for dataset revisions.
 - Built-in rules for schema consistency, metadata, row groups, statistics,
   compression, timestamp portability, dictionary encoding, and small files.
 - JSON, SARIF, and human-readable reports.
@@ -45,22 +46,58 @@ uv run arrow-lint lint path/to/dataset --output json
 uv run arrow-lint lint path/to/dataset --output sarif > arrowlint.sarif
 uv run arrow-lint rules
 uv run arrow-lint formats
+uv run arrow-lint diff old.parquet new.parquet
+uv run arrowdiff old.parquet new.parquet
 ```
+
+ArrowDiff compares schemas, column statistics, metadata, row-group layout,
+compression, row counts, and estimated scan bytes. Parquet comparisons use
+footer metadata without decoding column values:
+
+```text
+ArrowDiff
+old.parquet → new.parquet
+
+✓ Schema identical
+
+Column changes
+  - phenotype_score
+  - temporary_column
+
+Metadata
+  Changed:
+    ~ microscope_model
+
+Statistics
+  Row groups changed (1 → 2)
+  Compression changed (UNCOMPRESSED → ZSTD)
+  Estimated scan cost +18.0% (1000000 → 1180000 bytes)
+```
+
+Use `--output json` for automation and `--exit-code` to return status `1` when
+differences are detected. ArrowDiff reports its comparison basis explicitly and
+does not claim row-level equality. Arrow IPC and Feather inputs are read through
+the existing batch scanner to establish row counts, but do not expose Parquet-
+style column statistics.
 
 There is also a native Rust binary:
 
 ```bash
 cargo run -p arrowlint-cli -- lint path/to/dataset
+cargo run -p arrowlint-cli -- diff old.parquet new.parquet
 ```
 
 ## Python API
 
 ```python
-from arrow_lint import lint
+from arrow_lint import diff, lint
 
 report = lint("path/to/dataset", config=".arrowlint.yaml")
 for diagnostic in report["diagnostics"]:
     print(diagnostic["rule_id"], diagnostic["message"])
+
+changes = diff("old.parquet", "new.parquet")
+print(changes["statistics"]["estimated_scan_cost_change_percent"])
 ```
 
 ## Configuration
@@ -101,15 +138,15 @@ PyO3 native module       Rust CLI
         +--------+----------+
                  v
           arrowlint-core
-        /       |        \
+       /        |         \
  scanners  dataset model  rules
-        \       |        /
-              reports
+       \        |         /
+         lint + diff reports
 ```
 
-The core crate owns scanning, diagnostics, rule execution, and rendering. The
-Python package is deliberately thin so plugin authors and data teams get a
-comfortable interface without compromising the Rust fast path.
+The core crate owns scanning, diagnostics, rule execution, dataset comparison,
+and rendering. The Python package is deliberately thin so plugin authors and
+data teams get a comfortable interface without compromising the Rust fast path.
 
 ## Extension Strategy
 

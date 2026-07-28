@@ -88,7 +88,7 @@ impl SchemaModel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct FieldModel {
     pub name: String,
     pub data_type: String,
@@ -96,7 +96,7 @@ pub struct FieldModel {
     pub metadata: BTreeMap<String, String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RowGroupModel {
     pub ordinal: usize,
     pub num_rows: i64,
@@ -104,7 +104,7 @@ pub struct RowGroupModel {
     pub columns: Vec<ColumnChunkModel>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ColumnChunkModel {
     pub path: String,
     pub physical_type: String,
@@ -112,5 +112,18 @@ pub struct ColumnChunkModel {
     pub compression: String,
     pub encodings: Vec<String>,
     pub has_statistics: bool,
+    pub statistics: Option<ColumnStatisticsModel>,
     pub num_values: i64,
+    pub compressed_size: i64,
+    pub uncompressed_size: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct ColumnStatisticsModel {
+    pub min_hex: Option<String>,
+    pub max_hex: Option<String>,
+    pub null_count: Option<u64>,
+    pub distinct_count: Option<u64>,
+    pub min_is_exact: bool,
+    pub max_is_exact: bool,
 }

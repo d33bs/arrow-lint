@@ -21,6 +21,7 @@ REQUIRED_SDIST_FILES = {
     "README.md",
     "pyproject.toml",
     "crates/arrowlint-core/Cargo.toml",
+    "crates/arrowlint-core/src/diff.rs",
     "crates/arrowlint-core/src/lib.rs",
     "crates/arrowlint-python/Cargo.toml",
     "crates/arrowlint-python/src/lib.rs",

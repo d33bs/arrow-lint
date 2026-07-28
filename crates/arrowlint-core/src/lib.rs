@@ -2,6 +2,7 @@ pub mod config;
 pub mod dataset;
 pub mod declarative;
 pub mod diagnostics;
+pub mod diff;
 pub mod format_packs;
 pub mod plugins;
 pub mod report;
@@ -10,6 +11,7 @@ pub mod scanners;
 
 pub use config::LintConfig;
 pub use diagnostics::{Diagnostic, Severity};
+pub use diff::{diff_paths, diff_paths_with_config, DiffReport};
 pub use report::{LintReport, OutputFormat};
 
 use std::path::PathBuf;

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 OutputFormat = Literal["text", "json", "sarif"]
+DiffOutputFormat = Literal["text", "json"]
 
 
 def lint(
@@ -50,6 +51,26 @@ def formats() -> list[dict[str, Any]]:
     from arrow_lint import _native
 
     return json.loads(_native.formats_json())
+
+
+def diff(old: str | Path, new: str | Path) -> dict[str, Any]:
+    """Compare two Arrow dataset paths using metadata and column statistics."""
+
+    from arrow_lint import _native
+
+    return json.loads(_native.diff_paths_json(str(old), str(new)))
+
+
+def render_diff(
+    old: str | Path,
+    new: str | Path,
+    output: DiffOutputFormat = "text",
+) -> str:
+    """Compare two Arrow dataset paths and render text or JSON output."""
+
+    from arrow_lint import _native
+
+    return _native.render_diff(str(old), str(new), output)
 
 
 def _normalize_paths(paths: str | Path | Sequence[str | Path]) -> list[str]:
