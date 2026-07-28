@@ -32,11 +32,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Python setup
-        uses: actions/setup-python@v6.3.0
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: false
       - name: Rust setup
@@ -80,11 +80,11 @@ jobs:
       - name: Fetch tags
         run: git fetch --all --tags
       - name: Python setup
-        uses: actions/setup-python@v6.3.0
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: "3.11"
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: false
       - name: Rust setup
@@ -122,11 +122,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Python setup
-        uses: actions/setup-python@v6.3.0
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: "3.11"
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: false
       - name: Download package distributions
@@ -144,4 +144,4 @@ jobs:
           uvx twine check dist/*
           python tools/check_release_artifacts.py dist
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.14.0
+        uses: pypa/gh-action-pypi-publish@v1.14.1
