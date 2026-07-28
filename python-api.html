@@ -133,6 +133,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="arrowdiff.html">
+    ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="rules.html">
     Rules
   </a>
@@ -240,6 +247,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="architecture.html">
     Architecture
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="arrowdiff.html">
+    ArrowDiff
   </a>
 </li>
 
@@ -367,10 +381,12 @@
 <h1>Python API<a class="headerlink" href="#python-api" title="Link to this heading">#</a></h1>
 <p>The Python API exposes the same Rust engine used by the command line interface.
 Functions return plain Python data structures or rendered report strings.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">formats</span><span class="p">,</span> <span class="n">lint</span><span class="p">,</span> <span class="n">render</span><span class="p">,</span> <span class="n">rules</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">diff</span><span class="p">,</span> <span class="n">formats</span><span class="p">,</span> <span class="n">lint</span><span class="p">,</span> <span class="n">render</span><span class="p">,</span> <span class="n">render_diff</span><span class="p">,</span> <span class="n">rules</span>
 
 <span class="n">report</span> <span class="o">=</span> <span class="n">lint</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="s2">&quot;.arrowlint.yaml&quot;</span><span class="p">)</span>
 <span class="n">text</span> <span class="o">=</span> <span class="n">render</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">&quot;text&quot;</span><span class="p">)</span>
+<span class="n">changes</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span><span class="s2">&quot;old.parquet&quot;</span><span class="p">,</span> <span class="s2">&quot;new.parquet&quot;</span><span class="p">)</span>
+<span class="n">diff_text</span> <span class="o">=</span> <span class="n">render_diff</span><span class="p">(</span><span class="s2">&quot;old.parquet&quot;</span><span class="p">,</span> <span class="s2">&quot;new.parquet&quot;</span><span class="p">)</span>
 <span class="n">all_rules</span> <span class="o">=</span> <span class="n">rules</span><span class="p">()</span>
 <span class="n">known_formats</span> <span class="o">=</span> <span class="n">formats</span><span class="p">()</span>
 </pre></div>
@@ -382,6 +398,12 @@ Functions return plain Python data structures or rendered report strings.</p>
 <dt class="sig sig-object py" id="arrow_lint.api._normalize_paths">
 <span class="sig-prename descclassname"><span class="pre">arrow_lint.api.</span></span><span class="sig-name descname"><span class="pre">_normalize_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/arrow_lint/api.html#_normalize_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#arrow_lint.api._normalize_paths" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="arrow_lint.api.diff">
+<span class="sig-prename descclassname"><span class="pre">arrow_lint.api.</span></span><span class="sig-name descname"><span class="pre">diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/arrow_lint/api.html#diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#arrow_lint.api.diff" title="Link to this definition">#</a></dt>
+<dd><p>Compare two Arrow dataset paths using metadata and column statistics.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="arrow_lint.api.formats">
@@ -399,6 +421,12 @@ Functions return plain Python data structures or rendered report strings.</p>
 <dt class="sig sig-object py" id="arrow_lint.api.render">
 <span class="sig-prename descclassname"><span class="pre">arrow_lint.api.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'text'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'json'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'sarif'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'text'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/arrow_lint/api.html#render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#arrow_lint.api.render" title="Link to this definition">#</a></dt>
 <dd><p>Lint paths and render the report as text, JSON, or SARIF.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="arrow_lint.api.render_diff">
+<span class="sig-prename descclassname"><span class="pre">arrow_lint.api.</span></span><span class="sig-name descname"><span class="pre">render_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'text'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'json'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'text'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/arrow_lint/api.html#render_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#arrow_lint.api.render_diff" title="Link to this definition">#</a></dt>
+<dd><p>Compare two Arrow dataset paths and render text or JSON output.</p>
 </dd></dl>
 
 <dl class="py function">

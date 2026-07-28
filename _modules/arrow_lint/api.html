@@ -131,6 +131,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../arrowdiff.html">
+    ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../../rules.html">
     Rules
   </a>
@@ -240,6 +247,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../architecture.html">
     Architecture
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../arrowdiff.html">
+    ArrowDiff
   </a>
 </li>
 
@@ -368,6 +382,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="n">OutputFormat</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;sarif&quot;</span><span class="p">]</span>
+<span class="n">DiffOutputFormat</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;json&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="lint">
@@ -421,6 +436,32 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">_native</span>
 
     <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">_native</span><span class="o">.</span><span class="n">formats_json</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="diff">
+<a class="viewcode-back" href="../../python-api.html#arrow_lint.api.diff">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">diff</span><span class="p">(</span><span class="n">old</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare two Arrow dataset paths using metadata and column statistics.&quot;&quot;&quot;</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">_native</span>
+
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">_native</span><span class="o">.</span><span class="n">diff_paths_json</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">old</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="render_diff">
+<a class="viewcode-back" href="../../python-api.html#arrow_lint.api.render_diff">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_diff</span><span class="p">(</span>
+    <span class="n">old</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">new</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">DiffOutputFormat</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compare two Arrow dataset paths and render text or JSON output.&quot;&quot;&quot;</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">_native</span>
+
+    <span class="k">return</span> <span class="n">_native</span><span class="o">.</span><span class="n">render_diff</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">old</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">new</span><span class="p">),</span> <span class="n">output</span><span class="p">)</span></div>
 
 
 

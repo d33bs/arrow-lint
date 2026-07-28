@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Architecture &#8212; arrow-lint  documentation</title>
+    <title>ArrowDiff &#8212; arrow-lint  documentation</title>
   
   
   
@@ -43,11 +43,11 @@
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'architecture';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'arrowdiff';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="ArrowDiff" href="arrowdiff.html" />
-    <link rel="prev" title="arrow-lint" href="index.html" />
+    <link rel="next" title="Rules" href="rules.html" />
+    <link rel="prev" title="Architecture" href="architecture.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -126,15 +126,15 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture.html">
     Architecture
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="arrowdiff.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
     ArrowDiff
   </a>
 </li>
@@ -245,15 +245,15 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture.html">
     Architecture
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="arrowdiff.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#">
     ArrowDiff
   </a>
 </li>
@@ -361,7 +361,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Architecture</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ArrowDiff</span></li>
   </ul>
 </nav>
 </div>
@@ -378,58 +378,77 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="architecture">
-<h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h1>
-<p>ArrowLint has a Rust-first core with a Python-first user experience.</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>CLI / Python API
-        |
-        v
-PyO3 native module
-        |
-        v
-Rust core engine
-        |
-  +-----+------+------+
-  |            |      |
-scanners   dataset  rules
-  |         model    |
-  +-----+------+------+
-        |
-        v
- lint reports: text, JSON, SARIF
- dataset diffs: text, JSON
+  <section id="arrowdiff">
+<h1>ArrowDiff<a class="headerlink" href="#arrowdiff" title="Link to this heading">#</a></h1>
+<p>ArrowDiff provides a Git-style comparison for Arrow datasets:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrowdiff<span class="w"> </span>old.parquet<span class="w"> </span>new.parquet
 </pre></div>
 </div>
-<section id="core-boundaries">
-<h2>Core Boundaries<a class="headerlink" href="#core-boundaries" title="Link to this heading">#</a></h2>
+<p>The same command is available through the main CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrow-lint<span class="w"> </span>diff<span class="w"> </span>old.parquet<span class="w"> </span>new.parquet
+</pre></div>
+</div>
+<section id="what-it-compares">
+<h2>What It Compares<a class="headerlink" href="#what-it-compares" title="Link to this heading">#</a></h2>
+<p>ArrowDiff scans both paths through the shared Rust dataset model and reports:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-core</span></code> owns scanning, the common dataset model, rules, dataset
-comparison, plugin traits, declarative rule evaluation, and report rendering.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-python</span></code> exposes the Rust core through PyO3.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-cli</span></code> provides a native binary for direct Rust integration.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">src/arrow_lint</span></code> provides the Python API and user-facing <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code> CLI.</p></li>
+<li><p>field names, types, nullability, metadata, and column order</p></li>
+<li><p>columns whose Parquet value counts or min/max/null/distinct statistics changed</p></li>
+<li><p>dataset and file key-value metadata</p></li>
+<li><p>file and row counts</p></li>
+<li><p>row-group structure</p></li>
+<li><p>compression codecs</p></li>
+<li><p>estimated scan bytes and percentage change</p></li>
 </ul>
+<p>Directories are compared recursively using the same discovery behavior as
+ArrowLint.</p>
 </section>
-<section id="dataset-model">
-<h2>Dataset Model<a class="headerlink" href="#dataset-model" title="Link to this heading">#</a></h2>
-<p>Every scanner returns the same model:</p>
-<ul class="simple">
-<li><p>files</p></li>
-<li><p>format</p></li>
-<li><p>size and row counts</p></li>
-<li><p>Arrow schema fields and metadata</p></li>
-<li><p>Parquet row groups and column chunk metadata where available</p></li>
-</ul>
-<p>This keeps rules format-aware without making every rule parse every format.
-ArrowDiff reuses the same model to compare field structure, metadata, Parquet
-statistics, row-group layout, compression, and estimated scan bytes.</p>
+<section id="output">
+<h2>Output<a class="headerlink" href="#output" title="Link to this heading">#</a></h2>
+<p>Human-readable output is the default:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ArrowDiff
+old.parquet → new.parquet
+
+✓ Schema identical
+
+Column changes
+  - phenotype_score
+  - temporary_column
+
+Metadata
+  Changed:
+    ~ microscope_model
+
+Statistics
+  Row groups changed (1 → 2)
+  Compression changed (UNCOMPRESSED → ZSTD)
+  Estimated scan cost +18.0% (1000000 → 1180000 bytes)
+</pre></div>
+</div>
+<p>Use JSON for CI, notebooks, or downstream tooling:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrowdiff<span class="w"> </span>old.parquet<span class="w"> </span>new.parquet<span class="w"> </span>--output<span class="w"> </span>json
+</pre></div>
+</div>
+<p>Use Git-style exit status when differences should affect automation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrowdiff<span class="w"> </span>old.parquet<span class="w"> </span>new.parquet<span class="w"> </span>--exit-code
+</pre></div>
+</div>
+<p>The command returns <code class="docutils literal notranslate"><span class="pre">0</span></code> after a successful comparison by default. With
+<code class="docutils literal notranslate"><span class="pre">--exit-code</span></code>, it returns <code class="docutils literal notranslate"><span class="pre">1</span></code> when a difference is detected and <code class="docutils literal notranslate"><span class="pre">0</span></code> when the
+reports are equivalent.</p>
 </section>
-<section id="extension-point">
-<h2>Extension Point<a class="headerlink" href="#extension-point" title="Link to this heading">#</a></h2>
-<p>Rust plugins implement the <code class="docutils literal notranslate"><span class="pre">Rule</span></code> trait and register with <code class="docutils literal notranslate"><span class="pre">RuleRegistry</span></code>.
-Python rule packs can use the public Python API and declarative rule files for
-configuration-driven checks. Format-specific Rust rule packs can add scanners,
-rules, and report metadata while using the same dataset and diagnostic model.</p>
+<section id="comparison-semantics">
+<h2>Comparison Semantics<a class="headerlink" href="#comparison-semantics" title="Link to this heading">#</a></h2>
+<p>The current comparison basis is <code class="docutils literal notranslate"><span class="pre">metadata_and_statistics</span></code>. Parquet comparisons
+read footer metadata without decoding column values and therefore do not prove
+row-level equality. Column statistics can identify many changed columns, but
+changes that preserve the same min/max/null/distinct summary may not be visible.
+Arrow IPC and Feather files are read through the existing batch scanner to
+establish row counts; they do not provide equivalent column-chunk statistics, so
+their comparisons focus on schema, metadata, row count, and file size.</p>
+<p>The JSON report includes <code class="docutils literal notranslate"><span class="pre">comparison_basis</span></code> and <code class="docutils literal notranslate"><span class="pre">has_changes</span></code> so applications
+can enforce the level of evidence they require without reproducing ArrowDiff’s
+change predicate.</p>
 </section>
 </section>
 
@@ -444,20 +463,20 @@ rules, and report metadata while using the same dataset and diagnostic model.</p
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="architecture.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">arrow-lint</p>
+        <p class="prev-next-title">Architecture</p>
       </div>
     </a>
     <a class="right-next"
-       href="arrowdiff.html"
+       href="rules.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">ArrowDiff</p>
+        <p class="prev-next-title">Rules</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

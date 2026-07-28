@@ -133,6 +133,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="arrowdiff.html">
+    ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="rules.html">
     Rules
   </a>
@@ -247,6 +254,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="arrowdiff.html">
+    ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="rules.html">
     Rules
   </a>
@@ -346,6 +360,7 @@ a rule system designed for the Arrow ecosystem.</p>
 <li><p>Scanners for Parquet, Arrow IPC, and Feather.</p></li>
 <li><p>Python API and Python-first CLI.</p></li>
 <li><p>Native Rust CLI for direct integration.</p></li>
+<li><p>ArrowDiff metadata and statistics comparison for dataset revisions.</p></li>
 <li><p>Built-in rules for schema consistency, metadata, row groups, statistics,
 compression, timestamp portability, dictionary encoding, and small files.</p></li>
 <li><p>JSON, SARIF, and human-readable reports.</p></li>
@@ -379,20 +394,53 @@ uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> 
 uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--output<span class="w"> </span>sarif<span class="w"> </span>&gt;<span class="w"> </span>arrowlint.sarif
 uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>rules
 uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>formats
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>diff<span class="w"> </span>old.parquet<span class="w"> </span>new.parquet
+uv<span class="w"> </span>run<span class="w"> </span>arrowdiff<span class="w"> </span>old.parquet<span class="w"> </span>new.parquet
 </pre></div>
 </div>
+<p>ArrowDiff compares schemas, column statistics, metadata, row-group layout,
+compression, row counts, and estimated scan bytes. Parquet comparisons use
+footer metadata without decoding column values:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ArrowDiff
+old.parquet → new.parquet
+
+✓ Schema identical
+
+Column changes
+  - phenotype_score
+  - temporary_column
+
+Metadata
+  Changed:
+    ~ microscope_model
+
+Statistics
+  Row groups changed (1 → 2)
+  Compression changed (UNCOMPRESSED → ZSTD)
+  Estimated scan cost +18.0% (1000000 → 1180000 bytes)
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">--output</span> <span class="pre">json</span></code> for automation and <code class="docutils literal notranslate"><span class="pre">--exit-code</span></code> to return status <code class="docutils literal notranslate"><span class="pre">1</span></code> when
+differences are detected. ArrowDiff reports its comparison basis explicitly and
+does not claim row-level equality. Arrow IPC and Feather inputs are read through
+the existing batch scanner to establish row counts, but do not expose Parquet-
+style column statistics.</p>
 <p>There is also a native Rust binary:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span>arrowlint-cli<span class="w"> </span>--<span class="w"> </span>lint<span class="w"> </span>path/to/dataset
+cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span>arrowlint-cli<span class="w"> </span>--<span class="w"> </span>diff<span class="w"> </span>old.parquet<span class="w"> </span>new.parquet
 </pre></div>
 </div>
 </section>
 <section id="python-api">
 <h2>Python API<a class="headerlink" href="#python-api" title="Link to this heading">#</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">lint</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">diff</span><span class="p">,</span> <span class="n">lint</span>
 
 <span class="n">report</span> <span class="o">=</span> <span class="n">lint</span><span class="p">(</span><span class="s2">&quot;path/to/dataset&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="s2">&quot;.arrowlint.yaml&quot;</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">diagnostic</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;diagnostics&quot;</span><span class="p">]:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">diagnostic</span><span class="p">[</span><span class="s2">&quot;rule_id&quot;</span><span class="p">],</span> <span class="n">diagnostic</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">])</span>
+
+<span class="n">changes</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span><span class="s2">&quot;old.parquet&quot;</span><span class="p">,</span> <span class="s2">&quot;new.parquet&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">changes</span><span class="p">[</span><span class="s2">&quot;statistics&quot;</span><span class="p">][</span><span class="s2">&quot;estimated_scan_cost_change_percent&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
@@ -430,15 +478,15 @@ PyO3 native module       Rust CLI
         +--------+----------+
                  v
           arrowlint-core
-        /       |        \
+       /        |         \
  scanners  dataset model  rules
-        \       |        /
-              reports
+       \        |         /
+         lint + diff reports
 </pre></div>
 </div>
-<p>The core crate owns scanning, diagnostics, rule execution, and rendering. The
-Python package is deliberately thin so plugin authors and data teams get a
-comfortable interface without compromising the Rust fast path.</p>
+<p>The core crate owns scanning, diagnostics, rule execution, dataset comparison,
+and rendering. The Python package is deliberately thin so plugin authors and
+data teams get a comfortable interface without compromising the Rust fast path.</p>
 </section>
 <section id="extension-strategy">
 <h2>Extension Strategy<a class="headerlink" href="#extension-strategy" title="Link to this heading">#</a></h2>
@@ -470,6 +518,12 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#extension-point">Extension Point</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="arrowdiff.html">ArrowDiff</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="arrowdiff.html#what-it-compares">What It Compares</a></li>
+<li class="toctree-l2"><a class="reference internal" href="arrowdiff.html#output">Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="arrowdiff.html#comparison-semantics">Comparison Semantics</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="rules.html">Rules</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="rules.html#declarative-rules">Declarative Rules</a></li>
 </ul>
@@ -482,9 +536,11 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 <li class="toctree-l1"><a class="reference internal" href="python-api.html">Python API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="python-api.html#module-arrow_lint.api">arrow_lint.api</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api._normalize_paths"><code class="docutils literal notranslate"><span class="pre">_normalize_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.diff"><code class="docutils literal notranslate"><span class="pre">diff()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.formats"><code class="docutils literal notranslate"><span class="pre">formats()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.lint"><code class="docutils literal notranslate"><span class="pre">lint()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.render_diff"><code class="docutils literal notranslate"><span class="pre">render_diff()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python-api.html#arrow_lint.api.rules"><code class="docutils literal notranslate"><span class="pre">rules()</span></code></a></li>
 </ul>
 </li>

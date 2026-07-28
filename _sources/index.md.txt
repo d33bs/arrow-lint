@@ -13,6 +13,7 @@ caption: 'Contents:'
 maxdepth: 3
 ---
 architecture
+arrowdiff
 rules
 format-packs
 python-api
