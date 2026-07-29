@@ -409,6 +409,8 @@ uv<span class="w"> </span>run<span class="w"> </span>maturin<span class="w"> </s
 <section id="cli">
 <h2>CLI<a class="headerlink" href="#cli" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--config<span class="w"> </span>.arrowlint.yaml
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--only<span class="w"> </span>AL011
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--disable<span class="w"> </span>AL004
 uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--output<span class="w"> </span>json
 uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>path/to/dataset<span class="w"> </span>--output<span class="w"> </span>sarif<span class="w"> </span>&gt;<span class="w"> </span>arrowlint.sarif
 uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>rules
@@ -454,7 +456,11 @@ cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </spa
 <h2>Python API<a class="headerlink" href="#python-api" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">arrow_lint</span><span class="w"> </span><span class="kn">import</span> <span class="n">diff</span><span class="p">,</span> <span class="n">lint</span>
 
-<span class="n">report</span> <span class="o">=</span> <span class="n">lint</span><span class="p">(</span><span class="s2">&quot;path/to/dataset&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="s2">&quot;.arrowlint.yaml&quot;</span><span class="p">)</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">lint</span><span class="p">(</span>
+    <span class="s2">&quot;path/to/dataset&quot;</span><span class="p">,</span>
+    <span class="n">config</span><span class="o">=</span><span class="s2">&quot;.arrowlint.yaml&quot;</span><span class="p">,</span>
+    <span class="n">only</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;AL011&quot;</span><span class="p">,</span> <span class="s2">&quot;AL014&quot;</span><span class="p">],</span>
+<span class="p">)</span>
 <span class="k">for</span> <span class="n">diagnostic</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;diagnostics&quot;</span><span class="p">]:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">diagnostic</span><span class="p">[</span><span class="s2">&quot;rule_id&quot;</span><span class="p">],</span> <span class="n">diagnostic</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">])</span>
 
@@ -473,11 +479,16 @@ cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </spa
 <span class="w">  </span><span class="nt">min_row_group_rows</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100000</span>
 <span class="w">  </span><span class="nt">small_file_bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">67108864</span>
 <span class="w">  </span><span class="nt">fail_on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">error</span>
+<span class="w">  </span><span class="nt">only</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="w">  </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="w">  </span><span class="nt">declarative_rule_files</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">examples/rules/metadata.yaml</span>
 </pre></div>
 </div>
+<p>An empty <code class="docutils literal notranslate"><span class="pre">only</span></code> list runs every rule. A non-empty list runs only those rule IDs.
+<code class="docutils literal notranslate"><span class="pre">disabled</span></code> rules are removed after selection and therefore take precedence.
+The repeatable CLI options <code class="docutils literal notranslate"><span class="pre">--only</span></code> and <code class="docutils literal notranslate"><span class="pre">--disable</span></code> provide invocation-specific
+selection without editing the configuration file.</p>
 <p>Declarative rules cover simple metadata checks:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">rule</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">missing_crs</span>
 <span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
@@ -535,6 +546,7 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#core-boundaries">Core Boundaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#dataset-model">Dataset Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#extension-point">Extension Point</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#development-tooling-boundary">Development Tooling Boundary</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="arrowdiff.html">ArrowDiff</a><ul>
@@ -555,6 +567,7 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="rules.html#rule-scope">Rule Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#selecting-rules">Selecting Rules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rules.html#declarative-rules">Declarative Rules</a></li>
 </ul>
 </li>

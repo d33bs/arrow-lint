@@ -119,6 +119,39 @@ compare stored statistics with every physical value. A clean result therefore
 means the inspected footer metadata is internally consistent; it does not
 prove that the complete file contents are uncorrupted.
 
+## Selecting Rules
+
+Run a focused rule set with repeatable CLI options:
+
+```bash
+arrow-lint lint dataset --only AL011 --only AL014
+arrow-lint lint dataset --disable AL004
+```
+
+The native Rust CLI supports the same options:
+
+```bash
+cargo run -p arrowlint-cli -- lint dataset --only AL011
+```
+
+Persist selection in `.arrowlint.yaml` when a project needs the same policy on
+every run:
+
+```yaml
+rules:
+  only:
+    - AL011
+    - AL014
+  disabled:
+    - AL014
+```
+
+An empty or omitted `only` list enables all built-in and declarative rules. A
+non-empty `only` list includes only matching rule IDs. `disabled` always takes
+precedence, so the example runs `AL011` and suppresses `AL014`. Supplying
+`--only` replaces the configured `only` list for that invocation; `--disable`
+adds to the configured disabled rules.
+
 ## Declarative Rules
 
 Use declarative YAML rules for simple metadata checks:

@@ -458,6 +458,19 @@ Python rule packs can use the public Python API and declarative rule files for
 configuration-driven checks. Format-specific Rust rule packs can add scanners,
 rules, and report metadata while using the same dataset and diagnostic model.</p>
 </section>
+<section id="development-tooling-boundary">
+<h2>Development Tooling Boundary<a class="headerlink" href="#development-tooling-boundary" title="Link to this heading">#</a></h2>
+<p>ArrowLint applies lint policy to datasets. It does not replace source-code
+formatters, language linters, or repository hook orchestration. This repository
+uses <code class="docutils literal notranslate"><span class="pre">prek</span></code> for those development checks and keeps dataset rule selection in
+the Rust engine, where the Python and native CLIs share identical semantics.</p>
+<p>Future interoperability work should use deterministic producer-consumer
+fixtures across Arrow implementations. Each producer should write a stable
+fixture, every compatible consumer should scan it, and ArrowLint should verify
+that diagnostics and normalized metadata remain consistent. Performance gates
+can similarly build on ArrowDiff’s estimated scan-cost change rather than
+introducing a separate comparison model.</p>
+</section>
 </section>
 
 

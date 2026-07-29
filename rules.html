@@ -589,6 +589,33 @@ compare stored statistics with every physical value. A clean result therefore
 means the inspected footer metadata is internally consistent; it does not
 prove that the complete file contents are uncorrupted.</p>
 </section>
+<section id="selecting-rules">
+<h2>Selecting Rules<a class="headerlink" href="#selecting-rules" title="Link to this heading">#</a></h2>
+<p>Run a focused rule set with repeatable CLI options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>dataset<span class="w"> </span>--only<span class="w"> </span>AL011<span class="w"> </span>--only<span class="w"> </span>AL014
+arrow-lint<span class="w"> </span>lint<span class="w"> </span>dataset<span class="w"> </span>--disable<span class="w"> </span>AL004
+</pre></div>
+</div>
+<p>The native Rust CLI supports the same options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span>arrowlint-cli<span class="w"> </span>--<span class="w"> </span>lint<span class="w"> </span>dataset<span class="w"> </span>--only<span class="w"> </span>AL011
+</pre></div>
+</div>
+<p>Persist selection in <code class="docutils literal notranslate"><span class="pre">.arrowlint.yaml</span></code> when a project needs the same policy on
+every run:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">only</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AL011</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AL014</span>
+<span class="w">  </span><span class="nt">disabled</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AL014</span>
+</pre></div>
+</div>
+<p>An empty or omitted <code class="docutils literal notranslate"><span class="pre">only</span></code> list enables all built-in and declarative rules. A
+non-empty <code class="docutils literal notranslate"><span class="pre">only</span></code> list includes only matching rule IDs. <code class="docutils literal notranslate"><span class="pre">disabled</span></code> always takes
+precedence, so the example runs <code class="docutils literal notranslate"><span class="pre">AL011</span></code> and suppresses <code class="docutils literal notranslate"><span class="pre">AL014</span></code>. Supplying
+<code class="docutils literal notranslate"><span class="pre">--only</span></code> replaces the configured <code class="docutils literal notranslate"><span class="pre">only</span></code> list for that invocation; <code class="docutils literal notranslate"><span class="pre">--disable</span></code>
+adds to the configured disabled rules.</p>
+</section>
 <section id="declarative-rules">
 <h2>Declarative Rules<a class="headerlink" href="#declarative-rules" title="Link to this heading">#</a></h2>
 <p>Use declarative YAML rules for simple metadata checks:</p>
