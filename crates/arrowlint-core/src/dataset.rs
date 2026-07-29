@@ -72,6 +72,74 @@ pub struct DatasetFile {
     pub row_groups: Vec<RowGroupModel>,
     #[serde(skip)]
     pub iceberg_metadata: Option<serde_json::Value>,
+    #[serde(skip)]
+    pub lance_metadata: Option<LanceMetadata>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct LanceMetadata {
+    pub versions_directory_present: bool,
+    pub manifest_count: usize,
+    pub selected_manifest_path: Option<String>,
+    pub filename_version: Option<u64>,
+    pub naming_schemes: Vec<String>,
+    pub errors: Vec<String>,
+    pub manifest: Option<LanceManifest>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LanceManifest {
+    pub version: u64,
+    pub reader_feature_flags: u64,
+    pub writer_feature_flags: u64,
+    pub max_fragment_id: Option<u32>,
+    pub transaction_file: String,
+    pub data_format: Option<LanceDataStorageFormat>,
+    pub config: BTreeMap<String, String>,
+    pub base_paths: Vec<LanceBasePath>,
+    pub fragments: Vec<LanceFragment>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LanceDataStorageFormat {
+    pub file_format: String,
+    pub version: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct LanceBasePath {
+    pub id: u32,
+    pub is_dataset_root: bool,
+    pub path: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct LanceFragment {
+    pub id: u64,
+    pub files: Vec<LanceDataFile>,
+    pub deletion_file: Option<LanceDeletionFile>,
+    pub physical_rows: u64,
+    pub overlay_count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct LanceDataFile {
+    pub path: String,
+    pub fields: Vec<i32>,
+    pub column_indices: Vec<i32>,
+    pub file_major_version: u32,
+    pub file_minor_version: u32,
+    pub file_size_bytes: u64,
+    pub base_id: Option<u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LanceDeletionFile {
+    pub file_type: i32,
+    pub read_version: u64,
+    pub id: u64,
+    pub num_deleted_rows: u64,
+    pub base_id: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

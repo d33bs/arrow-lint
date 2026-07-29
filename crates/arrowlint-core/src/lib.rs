@@ -5,6 +5,7 @@ pub mod diagnostics;
 pub mod diff;
 pub mod format_packs;
 mod iceberg;
+mod lance;
 pub mod plugins;
 pub mod report;
 pub mod rules;

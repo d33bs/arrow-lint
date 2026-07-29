@@ -36,6 +36,7 @@ pub fn builtin_registry() -> RuleRegistry {
     registry.register(MissingParquetNullCounts);
     registry.register(InvalidParquetSizeMetadata);
     crate::iceberg::register_rules(&mut registry);
+    crate::lance::register_rules(&mut registry);
     registry.register(RecognizedExtensionFormat);
     registry
 }
@@ -882,6 +883,7 @@ impl Rule for RecognizedExtensionFormat {
             .filter(|file| {
                 !file.format.is_supported_scanner()
                     && file.format != Format::IcebergMetadata
+                    && file.format != Format::LanceDataset
                     && file.format != Format::Unknown
             })
             .map(|file| {
@@ -894,7 +896,7 @@ impl Rule for RecognizedExtensionFormat {
                 )
                 .with_path(file.path.clone())
                 .with_help(format!(
-                    "planned rule pack: arrowlint-{format}; current built-ins focus on Arrow IPC, Feather, Parquet, and Iceberg metadata"
+                    "planned rule pack: arrowlint-{format}; current built-ins focus on Arrow IPC, Feather, Parquet, Iceberg metadata, and Lance metadata"
                 ))
             })
             .collect()
@@ -1186,7 +1188,8 @@ mod tests {
         assert_eq!(ids.len(), metadata.len());
         for rule_id in [
             "AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015", "AL101", "AL102",
-            "AL103", "AL104", "AL105", "AL106", "AL107",
+            "AL103", "AL104", "AL105", "AL106", "AL107", "AL201", "AL202", "AL203", "AL204",
+            "AL205", "AL206", "AL207",
         ] {
             assert!(ids.contains(rule_id), "{rule_id} should be registered");
         }
@@ -1214,6 +1217,7 @@ mod tests {
             metadata: BTreeMap::new(),
             row_groups: Vec::new(),
             iceberg_metadata: None,
+            lance_metadata: None,
         }
     }
 
@@ -1229,6 +1233,7 @@ mod tests {
                 metadata: BTreeMap::new(),
                 row_groups,
                 iceberg_metadata: None,
+                lance_metadata: None,
             }],
         }
     }

@@ -34,9 +34,8 @@ pub fn scan_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Dataset> {
             Format::Parquet => scan_parquet(&path)?,
             Format::ArrowIpc | Format::Feather => scan_ipc(&path, format)?,
             Format::IcebergMetadata => scan_iceberg_metadata(&path)?,
-            Format::LanceDataset | Format::Vortex | Format::DuckDb => {
-                scan_planned_format(&path, format)?
-            }
+            Format::LanceDataset => crate::lance::scan_dataset(&path)?,
+            Format::Vortex | Format::DuckDb => scan_planned_format(&path, format)?,
             Format::Unknown => continue,
         };
         files.push(file);
@@ -53,6 +52,13 @@ pub fn scan_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Dataset> {
 fn expand_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Vec<PathBuf>> {
     let mut expanded = Vec::new();
     for path in paths {
+        if let Some(root) = lance_dataset_root(path) {
+            if path.exists() {
+                expanded.push(root);
+                continue;
+            }
+        }
+
         if path.is_file() {
             expanded.push(path.clone());
             continue;
@@ -60,9 +66,17 @@ fn expand_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Vec<PathBuf>> 
 
         if path.is_dir() {
             if config.recursive {
-                for entry in WalkDir::new(path).follow_links(config.follow_links) {
+                let mut entries = WalkDir::new(path)
+                    .follow_links(config.follow_links)
+                    .into_iter();
+                while let Some(entry) = entries.next() {
                     let entry =
                         entry.with_context(|| format!("failed to walk {}", path.display()))?;
+                    if entry.file_type().is_dir() && is_lance_dataset_root(entry.path()) {
+                        expanded.push(entry.path().to_path_buf());
+                        entries.skip_current_dir();
+                        continue;
+                    }
                     if entry.file_type().is_file() {
                         expanded.push(entry.path().to_path_buf());
                     }
@@ -72,7 +86,10 @@ fn expand_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Vec<PathBuf>> 
                     .with_context(|| format!("failed to read {}", path.display()))?
                 {
                     let entry = entry?;
-                    if entry.file_type()?.is_file() {
+                    let file_type = entry.file_type()?;
+                    if file_type.is_file()
+                        || (file_type.is_dir() && is_lance_dataset_root(&entry.path()))
+                    {
                         expanded.push(entry.path());
                     }
                 }
@@ -86,6 +103,18 @@ fn expand_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Vec<PathBuf>> 
     expanded.sort();
     expanded.dedup();
     Ok(expanded)
+}
+
+fn lance_dataset_root(path: &Path) -> Option<PathBuf> {
+    path.ancestors()
+        .find(|ancestor| is_lance_dataset_root(ancestor))
+        .map(Path::to_path_buf)
+}
+
+fn is_lance_dataset_root(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| name.to_ascii_lowercase().ends_with(".lance"))
 }
 
 fn scan_parquet(path: &Path) -> Result<DatasetFile> {
@@ -148,6 +177,7 @@ fn scan_parquet(path: &Path) -> Result<DatasetFile> {
         metadata: key_values,
         row_groups,
         iceberg_metadata: None,
+        lance_metadata: None,
     })
 }
 
@@ -194,6 +224,7 @@ fn scan_ipc(path: &Path, format: Format) -> Result<DatasetFile> {
         metadata: BTreeMap::new(),
         row_groups: Vec::new(),
         iceberg_metadata: None,
+        lance_metadata: None,
     })
 }
 
@@ -225,6 +256,7 @@ fn scan_iceberg_metadata(path: &Path) -> Result<DatasetFile> {
         metadata: BTreeMap::new(),
         row_groups: Vec::new(),
         iceberg_metadata: Some(metadata),
+        lance_metadata: None,
     })
 }
 
@@ -244,6 +276,7 @@ fn scan_planned_format(path: &Path, format: Format) -> Result<DatasetFile> {
         metadata: BTreeMap::new(),
         row_groups: Vec::new(),
         iceberg_metadata: None,
+        lance_metadata: None,
     })
 }
 

@@ -59,13 +59,13 @@ pub fn known_format_packs() -> Vec<FormatPack> {
         },
         FormatPack {
             name: "lance",
-            status: "extension-ready",
-            rule_pack: "arrowlint-lance",
+            status: "built-in-metadata",
+            rule_pack: "arrowlint-core",
             best_practice_focus: &[
                 "fragment sizing",
-                "index health",
-                "schema evolution",
-                "vector column metadata",
+                "manifest and feature compatibility",
+                "data and deletion references",
+                "version retention",
             ],
         },
         FormatPack {

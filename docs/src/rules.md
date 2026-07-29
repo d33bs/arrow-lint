@@ -1,6 +1,6 @@
 # Rules
 
-ArrowLint ships with built-in rules for common Arrow, Parquet, and Iceberg
+ArrowLint ships with built-in rules for common Arrow, Parquet, Iceberg, and Lance
 quality issues. Rules classified as errors identify internally inconsistent
 metadata. Warnings identify deprecated features or broadly applicable
 interoperability and performance concerns. Informational diagnostics identify
@@ -31,6 +31,13 @@ review opportunities.
 | `AL105` | error    | iceberg          | flags inconsistent snapshots and snapshot logs          |
 | `AL106` | error    | iceberg          | flags invalid schema and partition field IDs            |
 | `AL107` | info     | maintenance      | flags large snapshot and metadata histories             |
+| `AL201` | error    | lance            | flags invalid or inconsistent Lance manifests           |
+| `AL202` | error    | lance            | flags invalid Lance fragment identifiers                |
+| `AL203` | error    | lance            | flags invalid Lance data-file field mappings            |
+| `AL204` | error    | lance            | flags invalid Lance deletion metadata                   |
+| `AL205` | error    | interoperability | flags unsupported or inconsistent Lance features        |
+| `AL206` | error    | lance            | flags missing or inconsistent local Lance references    |
+| `AL207` | info     | maintenance      | flags Lance compaction and retention opportunities      |
 
 ## Parquet Validity and Compatibility
 
@@ -200,6 +207,93 @@ manifest lists or manifests, verify referenced files exist, detect duplicate
 data-file paths, inspect delete-file strategy, or measure manifest and data-file
 sizes. A clean metadata result therefore establishes internal table-metadata
 consistency, not complete table health.
+
+## Lance Table Metadata
+
+ArrowLint recognizes local `*.lance` dataset directories as one lint target,
+including when they are discovered below a parent directory. It supports both
+Lance manifest naming schemes, selects the latest attached version, validates
+the `LANC` footer envelope, and decodes the stable protobuf fields needed by
+`AL201` through `AL207`.
+
+Reference: [Lance table format](https://lance.org/format/table/)
+
+### `AL201` — Invalid Lance Manifest
+
+Reports missing `_versions` metadata, missing attached manifests, malformed
+manifest filenames, mixed V1 and V2 naming schemes, corrupt footer envelopes,
+protobuf decoding failures, zero versions, and disagreement between the
+manifest filename and payload version.
+
+Reference: [Lance storage layout](https://lance.org/format/table/layout/)
+
+### `AL202` — Invalid Lance Fragment Identifiers
+
+Reports duplicate fragment IDs and a `max_fragment_id` high-water mark below an
+ID used by the current manifest. Fragment IDs are stable dataset-wide
+identifiers and cannot be ambiguous or move backward.
+
+### `AL203` — Invalid Lance Data Files
+
+Validates that data-file paths are non-empty safe relative paths, the forbidden
+field ID `-1` is not persisted, active field IDs do not overlap across files in
+one fragment, and V2 field-to-column mappings have matching lengths and unique
+non-negative column indices. The tombstone field ID `-2` remains valid.
+
+### `AL204` — Invalid Lance Deletion Files
+
+Reports unknown deletion-file types, deletion files based on a future dataset
+version, and deleted-row counts greater than the fragment's physical row count.
+Both sparse Arrow deletion arrays and dense Roaring bitmaps are accepted.
+
+### `AL205` — Incompatible Lance Features
+
+Reports unknown required reader or writer feature bits and feature flags that
+do not match deletion files, table config, or base paths in the manifest. It
+also warns about the deprecated V2-format flag, unstable data overlays, and
+data format `2.3`, which the current Lance specification marks unstable.
+
+References: [Lance table feature flags](https://lance.org/format/table/versioning/),
+[Lance file versions](https://lance.org/format/file/versioning/)
+
+### `AL206` — Missing Lance References
+
+Checks local data, deletion, and transaction files referenced by the latest
+manifest. Known data-file sizes must match the local object size. Base-path IDs
+must be unique and every referenced ID must exist. Files using external base
+paths are not opened because remote access and credentials are outside the
+local scanner's scope.
+
+### `AL207` — Lance Maintenance Opportunities
+
+Reports informational diagnostics for retained-version history, collections of
+small fragments, and fragments whose deleted-row ratio exceeds configured
+thresholds:
+
+```yaml
+rules:
+  lance_max_versions: 100
+  lance_target_fragment_rows: 1048576
+  lance_small_fragment_count: 8
+  lance_deletion_compaction_threshold: 0.1
+```
+
+Set any threshold to `0` to disable that measurement. The default fragment size
+and deletion ratio match Lance's compaction defaults. Version cleanup is never
+prescribed automatically because it removes time-travel history; tagged
+versions and the required retention window must be reviewed first.
+
+References: [Lance table maintenance](https://lance.org/guide/read_and_write/),
+[Lance performance guide](https://lance.org/guide/performance/)
+
+## Lance Scope
+
+The built-in Lance scanner validates the latest local table manifest and
+locally resolvable references. It does not decode schema fields, index sections,
+data pages, deletion-vector contents, branches, tags, remote base paths, or
+historical manifest payloads. A clean result establishes current manifest
+consistency for the inspected metadata; it does not prove every data value or
+index entry is correct.
 
 ## Parquet Rule Scope
 

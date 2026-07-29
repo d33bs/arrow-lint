@@ -5,6 +5,12 @@ scan:
 rules:
   min_row_group_rows: 100000
   small_file_bytes: 67108864
+  iceberg_max_snapshots: 100
+  iceberg_max_metadata_log_entries: 100
+  lance_max_versions: 100
+  lance_target_fragment_rows: 1048576
+  lance_small_fragment_count: 8
+  lance_deletion_compaction_threshold: 0.1
   fail_on: error
   disabled: []
   declarative_rule_files:
