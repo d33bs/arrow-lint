@@ -96,6 +96,51 @@ fn disabled_parquet_rule_is_removed_from_report() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[test]
+fn only_selected_rules_are_included_in_report() -> anyhow::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("deprecated-compression.parquet");
+    let batch = record_batch()?;
+    let properties = WriterProperties::builder()
+        .set_compression(Compression::LZ4)
+        .build();
+    let mut writer = ArrowWriter::try_new(File::create(&path)?, batch.schema(), Some(properties))?;
+    writer.write(&batch)?;
+    writer.close()?;
+    let mut config = LintConfig::default();
+    config.rules.only.insert("AL011".to_string());
+
+    let report = lint_paths(&[path], config)?;
+
+    assert!(!report.diagnostics.is_empty());
+    assert!(report
+        .diagnostics
+        .iter()
+        .all(|diagnostic| diagnostic.rule_id == "AL011"));
+    Ok(())
+}
+
+#[test]
+fn disabled_rules_override_only_selected_rules() -> anyhow::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("deprecated-compression.parquet");
+    let batch = record_batch()?;
+    let properties = WriterProperties::builder()
+        .set_compression(Compression::LZ4)
+        .build();
+    let mut writer = ArrowWriter::try_new(File::create(&path)?, batch.schema(), Some(properties))?;
+    writer.write(&batch)?;
+    writer.close()?;
+    let mut config = LintConfig::default();
+    config.rules.only.insert("AL011".to_string());
+    config.rules.disabled.insert("AL011".to_string());
+
+    let report = lint_paths(&[path], config)?;
+
+    assert!(report.diagnostics.is_empty());
+    Ok(())
+}
+
 fn record_batch() -> anyhow::Result<RecordBatch> {
     let schema = Arc::new(Schema::new(vec![Field::new("id", DataType::Int64, false)]));
     Ok(RecordBatch::try_new(

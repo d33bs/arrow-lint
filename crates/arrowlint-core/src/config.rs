@@ -45,8 +45,9 @@ impl LintConfig {
         Ok(())
     }
 
-    pub fn is_disabled(&self, rule_id: &str) -> bool {
-        self.rules.disabled.contains(rule_id)
+    pub fn is_rule_enabled(&self, rule_id: &str) -> bool {
+        (self.rules.only.is_empty() || self.rules.only.contains(rule_id))
+            && !self.rules.disabled.contains(rule_id)
     }
 }
 
@@ -72,6 +73,7 @@ pub struct RuleConfig {
     pub min_row_group_rows: u64,
     pub small_file_bytes: u64,
     pub fail_on: Severity,
+    pub only: BTreeSet<String>,
     pub disabled: BTreeSet<String>,
     pub declarative_rule_files: Vec<PathBuf>,
 }
@@ -82,6 +84,7 @@ impl Default for RuleConfig {
             min_row_group_rows: 100_000,
             small_file_bytes: 64 * 1024 * 1024,
             fail_on: Severity::Error,
+            only: BTreeSet::new(),
             disabled: BTreeSet::new(),
             declarative_rule_files: Vec::new(),
         }

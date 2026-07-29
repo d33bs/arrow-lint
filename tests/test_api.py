@@ -5,7 +5,7 @@ import json
 from pytest import MonkeyPatch
 
 from arrow_lint import _native
-from arrow_lint.api import diff, formats, rules
+from arrow_lint.api import diff, formats, lint, render, rules
 
 
 def test_rules_exposes_builtin_metadata() -> None:
@@ -25,6 +25,79 @@ def test_formats_exposes_extension_targets() -> None:
 
     assert any(format_pack["name"] == "iceberg" for format_pack in known_formats)
     assert any(format_pack["name"] == "duckdb" for format_pack in known_formats)
+
+
+def test_lint_forwards_rule_selection(monkeypatch: MonkeyPatch) -> None:
+    calls: list[tuple[list[str], str | None, list[str] | None, list[str] | None]] = []
+
+    def lint_paths_json(
+        paths: list[str],
+        config_path: str | None,
+        only: list[str] | None,
+        disabled: list[str] | None,
+    ) -> str:
+        calls.append((paths, config_path, only, disabled))
+        return json.dumps({"diagnostics": []})
+
+    monkeypatch.setattr(_native, "lint_paths_json", lint_paths_json)
+
+    report = lint(
+        "dataset.parquet",
+        config=".arrowlint.yaml",
+        only=["AL011"],
+        disabled=["AL001"],
+    )
+
+    assert report == {"diagnostics": []}
+    assert calls == [
+        (
+            ["dataset.parquet"],
+            ".arrowlint.yaml",
+            ["AL011"],
+            ["AL001"],
+        )
+    ]
+
+
+def test_render_forwards_rule_selection(monkeypatch: MonkeyPatch) -> None:
+    calls: list[
+        tuple[
+            list[str],
+            str | None,
+            str,
+            list[str] | None,
+            list[str] | None,
+        ]
+    ] = []
+
+    def render_lint(
+        paths: list[str],
+        config_path: str | None,
+        output: str,
+        only: list[str] | None,
+        disabled: list[str] | None,
+    ) -> str:
+        calls.append((paths, config_path, output, only, disabled))
+        return "No diagnostics.\n"
+
+    monkeypatch.setattr(_native, "render_lint", render_lint)
+
+    output = render(
+        "dataset.parquet",
+        only=["AL011"],
+        disabled=["AL001"],
+    )
+
+    assert output == "No diagnostics.\n"
+    assert calls == [
+        (
+            ["dataset.parquet"],
+            None,
+            "text",
+            ["AL011"],
+            ["AL001"],
+        )
+    ]
 
 
 def test_diff_exposes_structured_report(monkeypatch: MonkeyPatch) -> None:

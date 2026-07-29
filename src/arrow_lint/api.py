@@ -12,29 +12,53 @@ DiffOutputFormat = Literal["text", "json"]
 
 
 def lint(
-    paths: str | Path | Sequence[str | Path], config: str | Path | None = None
+    paths: str | Path | Sequence[str | Path],
+    config: str | Path | None = None,
+    *,
+    only: Sequence[str] | None = None,
+    disabled: Sequence[str] | None = None,
 ) -> dict[str, Any]:
-    """Lint one or more Arrow dataset paths and return a JSON-compatible report."""
+    """Lint paths, optionally selecting or disabling rule IDs."""
 
     from arrow_lint import _native
 
     normalized_paths = _normalize_paths(paths)
     config_path = str(config) if config is not None else None
-    return json.loads(_native.lint_paths_json(normalized_paths, config_path))
+    only_rules = list(only) if only is not None else None
+    disabled_rules = list(disabled) if disabled is not None else None
+    return json.loads(
+        _native.lint_paths_json(
+            normalized_paths,
+            config_path,
+            only_rules,
+            disabled_rules,
+        )
+    )
 
 
 def render(
     paths: str | Path | Sequence[str | Path],
     config: str | Path | None = None,
     output: OutputFormat = "text",
+    *,
+    only: Sequence[str] | None = None,
+    disabled: Sequence[str] | None = None,
 ) -> str:
-    """Lint paths and render the report as text, JSON, or SARIF."""
+    """Lint selected rules and render the report as text, JSON, or SARIF."""
 
     from arrow_lint import _native
 
     normalized_paths = _normalize_paths(paths)
     config_path = str(config) if config is not None else None
-    return _native.render_lint(normalized_paths, config_path, output)
+    only_rules = list(only) if only is not None else None
+    disabled_rules = list(disabled) if disabled is not None else None
+    return _native.render_lint(
+        normalized_paths,
+        config_path,
+        output,
+        only_rules,
+        disabled_rules,
+    )
 
 
 def rules() -> list[dict[str, Any]]:

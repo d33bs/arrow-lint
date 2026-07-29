@@ -24,10 +24,12 @@ pub fn lint_paths(paths: &[PathBuf], config: LintConfig) -> Result<LintReport> {
     let mut diagnostics = registry.check(&dataset, &config);
 
     for rule in &config.declarative_rules {
-        diagnostics.extend(declarative::evaluate(rule, &dataset));
+        if config.is_rule_enabled(&rule.rule) {
+            diagnostics.extend(declarative::evaluate(rule, &dataset));
+        }
     }
 
-    diagnostics.retain(|diagnostic| !config.is_disabled(&diagnostic.rule_id));
+    diagnostics.retain(|diagnostic| config.is_rule_enabled(&diagnostic.rule_id));
     diagnostics.sort_by(|left, right| {
         left.path
             .cmp(&right.path)

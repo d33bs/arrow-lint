@@ -1,6 +1,15 @@
-def lint_paths_json(paths: list[str], config_path: str | None) -> str: ...
+def lint_paths_json(
+    paths: list[str],
+    config_path: str | None,
+    only_rules: list[str] | None = None,
+    disabled_rules: list[str] | None = None,
+) -> str: ...
 def render_lint(
-    paths: list[str], config_path: str | None, output_format: str
+    paths: list[str],
+    config_path: str | None,
+    output_format: str,
+    only_rules: list[str] | None = None,
+    disabled_rules: list[str] | None = None,
 ) -> str: ...
 def rules_json() -> str: ...
 def formats_json() -> str: ...

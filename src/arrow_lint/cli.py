@@ -32,6 +32,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="override the config failure threshold for this invocation",
     )
+    lint_parser.add_argument(
+        "--only",
+        action="append",
+        metavar="RULE_ID",
+        help="run only this rule; repeat to select multiple rules",
+    )
+    lint_parser.add_argument(
+        "--disable",
+        action="append",
+        metavar="RULE_ID",
+        help="disable this rule; repeat to disable multiple rules",
+    )
 
     subcommands.add_parser("rules", help="list built-in rules")
     subcommands.add_parser("formats", help="list known format packs")
@@ -50,13 +62,34 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "lint":
-        report = lint(args.paths, config=args.config)
+        report = lint(
+            args.paths,
+            config=args.config,
+            only=args.only,
+            disabled=args.disable,
+        )
         if args.output == "text":
-            sys.stdout.write(render(args.paths, config=args.config, output="text"))
+            sys.stdout.write(
+                render(
+                    args.paths,
+                    config=args.config,
+                    output="text",
+                    only=args.only,
+                    disabled=args.disable,
+                )
+            )
         elif args.output == "json":
             print(json.dumps(report, indent=2))
         else:
-            sys.stdout.write(render(args.paths, config=args.config, output="sarif"))
+            sys.stdout.write(
+                render(
+                    args.paths,
+                    config=args.config,
+                    output="sarif",
+                    only=args.only,
+                    disabled=args.disable,
+                )
+            )
         return _exit_code(report, args.fail_on)
 
     if args.command == "rules":

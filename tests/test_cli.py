@@ -1,6 +1,7 @@
 """Tests for the CLI module."""
 
 import json
+from pathlib import Path
 
 from pytest import CaptureFixture, MonkeyPatch
 
@@ -16,6 +17,44 @@ def test_rules_cli_lists_builtin_rules(capsys: CaptureFixture[str]) -> None:
     assert "tiny-row-groups" in captured.out
     assert "AL015" in captured.out
     assert "invalid-parquet-size-metadata" in captured.out
+
+
+def test_lint_cli_forwards_rule_selection(
+    monkeypatch: MonkeyPatch, capsys: CaptureFixture[str]
+) -> None:
+    calls: list[tuple[list[object], list[str], list[str]]] = []
+
+    def lint(
+        paths: list[object],
+        *,
+        config: object,
+        only: list[str],
+        disabled: list[str],
+    ) -> dict[str, object]:
+        calls.append((paths, only, disabled))
+        return {"diagnostics": []}
+
+    monkeypatch.setattr("arrow_lint.cli.lint", lint)
+    monkeypatch.setattr(
+        "arrow_lint.cli.render",
+        lambda paths, *, config, output, only, disabled: "No diagnostics.\n",
+    )
+
+    result = main(
+        [
+            "lint",
+            "dataset.parquet",
+            "--only",
+            "AL011",
+            "--disable",
+            "AL001",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.out == "No diagnostics.\n"
+    assert calls == [([Path("dataset.parquet")], ["AL011"], ["AL001"])]
 
 
 def test_diff_cli_renders_text(

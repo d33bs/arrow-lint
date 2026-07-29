@@ -5,21 +5,34 @@ use arrowlint_core::{
 };
 use pyo3::{exceptions::PyRuntimeError, prelude::*};
 
-#[pyfunction]
-fn lint_paths_json(paths: Vec<String>, config_path: Option<String>) -> PyResult<String> {
-    let config = load_config(config_path)?;
+#[pyfunction(signature = (paths, config_path, only_rules=None, disabled_rules=None))]
+fn lint_paths_json(
+    paths: Vec<String>,
+    config_path: Option<String>,
+    only_rules: Option<Vec<String>>,
+    disabled_rules: Option<Vec<String>>,
+) -> PyResult<String> {
+    let config = load_config(config_path, only_rules, disabled_rules)?;
     let paths = paths.into_iter().map(PathBuf::from).collect::<Vec<_>>();
     let report = lint_paths(&paths, config).map_err(to_py_error)?;
     serde_json::to_string_pretty(&report).map_err(to_py_error)
 }
 
-#[pyfunction]
+#[pyfunction(signature = (
+    paths,
+    config_path,
+    output_format,
+    only_rules=None,
+    disabled_rules=None
+))]
 fn render_lint(
     paths: Vec<String>,
     config_path: Option<String>,
     output_format: String,
+    only_rules: Option<Vec<String>>,
+    disabled_rules: Option<Vec<String>>,
 ) -> PyResult<String> {
-    let config = load_config(config_path)?;
+    let config = load_config(config_path, only_rules, disabled_rules)?;
     let fail_format = OutputFormat::parse(&output_format);
     let paths = paths.into_iter().map(PathBuf::from).collect::<Vec<_>>();
     let report = lint_paths(&paths, config).map_err(to_py_error)?;
@@ -54,11 +67,22 @@ fn render_diff(old_path: String, new_path: String, output_format: String) -> PyR
         .map_err(to_py_error)
 }
 
-fn load_config(config_path: Option<String>) -> PyResult<LintConfig> {
-    match config_path {
+fn load_config(
+    config_path: Option<String>,
+    only_rules: Option<Vec<String>>,
+    disabled_rules: Option<Vec<String>>,
+) -> PyResult<LintConfig> {
+    let mut config = match config_path {
         Some(path) => LintConfig::from_path(path).map_err(to_py_error),
         None => Ok(LintConfig::default()),
+    }?;
+    if let Some(only_rules) = only_rules {
+        config.rules.only = only_rules.into_iter().collect();
     }
+    if let Some(disabled_rules) = disabled_rules {
+        config.rules.disabled.extend(disabled_rules);
+    }
+    Ok(config)
 }
 
 fn to_py_error(error: impl std::fmt::Display) -> PyErr {

@@ -42,6 +42,8 @@ uv run maturin develop
 
 ```bash
 uv run arrow-lint lint path/to/dataset --config .arrowlint.yaml
+uv run arrow-lint lint path/to/dataset --only AL011
+uv run arrow-lint lint path/to/dataset --disable AL004
 uv run arrow-lint lint path/to/dataset --output json
 uv run arrow-lint lint path/to/dataset --output sarif > arrowlint.sarif
 uv run arrow-lint rules
@@ -92,7 +94,11 @@ cargo run -p arrowlint-cli -- diff old.parquet new.parquet
 ```python
 from arrow_lint import diff, lint
 
-report = lint("path/to/dataset", config=".arrowlint.yaml")
+report = lint(
+    "path/to/dataset",
+    config=".arrowlint.yaml",
+    only=["AL011", "AL014"],
+)
 for diagnostic in report["diagnostics"]:
     print(diagnostic["rule_id"], diagnostic["message"])
 
@@ -112,10 +118,16 @@ rules:
   min_row_group_rows: 100000
   small_file_bytes: 67108864
   fail_on: error
+  only: []
   disabled: []
   declarative_rule_files:
     - examples/rules/metadata.yaml
 ```
+
+An empty `only` list runs every rule. A non-empty list runs only those rule IDs.
+`disabled` rules are removed after selection and therefore take precedence.
+The repeatable CLI options `--only` and `--disable` provide invocation-specific
+selection without editing the configuration file.
 
 Declarative rules cover simple metadata checks:
 

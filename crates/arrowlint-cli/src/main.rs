@@ -23,6 +23,10 @@ enum Command {
         config: Option<PathBuf>,
         #[arg(long, value_enum, default_value_t = Output::Text)]
         output: Output,
+        #[arg(long = "only", value_name = "RULE_ID")]
+        only_rules: Vec<String>,
+        #[arg(long = "disable", value_name = "RULE_ID")]
+        disabled_rules: Vec<String>,
     },
     Rules {
         #[arg(long, value_enum, default_value_t = Output::Text)]
@@ -62,11 +66,17 @@ fn main() -> Result<()> {
             paths,
             config,
             output,
+            only_rules,
+            disabled_rules,
         } => {
-            let config = match config {
+            let mut config = match config {
                 Some(path) => LintConfig::from_path(path)?,
                 None => LintConfig::default(),
             };
+            if !only_rules.is_empty() {
+                config.rules.only = only_rules.into_iter().collect();
+            }
+            config.rules.disabled.extend(disabled_rules);
             let fail_on = config.rules.fail_on;
             let report = lint_paths(&paths, config)?;
             print!("{}", report.render(output.into())?);
