@@ -41,15 +41,17 @@ Every scanner returns the same model:
 - Parquet row groups and column chunk metadata where available
 - parsed Iceberg table metadata retained internally during rule evaluation
 - parsed Lance table metadata retained internally during rule evaluation
+- parsed Vortex postscript and footer metadata retained internally during rule
+  evaluation
 
 This keeps rules format-aware without making every rule parse every format.
 ArrowDiff reuses the same model to compare field structure, metadata, Parquet
 statistics, row-group layout, compression, and estimated scan bytes.
 
-Iceberg metadata JSON and the latest Lance manifest are parsed once by their
-scanners and retained outside the serialized report model. This avoids
-reparsing for every rule and prevents complete format metadata from being
-duplicated into JSON and SARIF reports.
+Iceberg metadata JSON, the latest Lance manifest, and Vortex container metadata
+are parsed once by their scanners and retained outside the serialized report
+model. This avoids reparsing for every rule and prevents complete format
+metadata from being duplicated into JSON and SARIF reports.
 
 ## Extension Point
 

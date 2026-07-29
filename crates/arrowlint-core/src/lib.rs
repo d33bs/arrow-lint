@@ -10,6 +10,7 @@ pub mod plugins;
 pub mod report;
 pub mod rules;
 pub mod scanners;
+mod vortex;
 
 pub use config::LintConfig;
 pub use diagnostics::{Diagnostic, Severity};

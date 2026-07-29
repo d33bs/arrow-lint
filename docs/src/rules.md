@@ -1,10 +1,10 @@
 # Rules
 
-ArrowLint ships with built-in rules for common Arrow, Parquet, Iceberg, and Lance
-quality issues. Rules classified as errors identify internally inconsistent
-metadata. Warnings identify deprecated features or broadly applicable
-interoperability and performance concerns. Informational diagnostics identify
-review opportunities.
+ArrowLint ships with built-in rules for common Arrow, Parquet, Iceberg, Lance,
+and Vortex quality issues. Rules classified as errors identify internally
+inconsistent metadata. Warnings identify deprecated features or broadly
+applicable interoperability and performance concerns. Informational diagnostics
+identify review opportunities.
 
 | Rule    | Severity | Category         | Purpose                                                 |
 | ------- | -------- | ---------------- | ------------------------------------------------------- |
@@ -38,6 +38,13 @@ review opportunities.
 | `AL205` | error    | interoperability | flags unsupported or inconsistent Lance features        |
 | `AL206` | error    | lance            | flags missing or inconsistent local Lance references    |
 | `AL207` | info     | maintenance      | flags Lance compaction and retention opportunities      |
+| `AL301` | error    | vortex           | flags invalid Vortex envelopes and postscripts          |
+| `AL302` | error    | vortex           | flags invalid Vortex postscript segment locators        |
+| `AL303` | error    | vortex           | flags invalid Vortex user metadata                      |
+| `AL304` | error    | vortex           | flags invalid Vortex footer segment registries          |
+| `AL305` | error    | vortex           | flags invalid Vortex array and layout registries        |
+| `AL306` | error    | interoperability | flags incompatible Vortex compression metadata          |
+| `AL307` | info     | performance      | reports missing Vortex optimization metadata            |
 
 ## Parquet Validity and Compatibility
 
@@ -294,6 +301,79 @@ data pages, deletion-vector contents, branches, tags, remote base paths, or
 historical manifest payloads. A clean result establishes current manifest
 consistency for the inspected metadata; it does not prove every data value or
 index entry is correct.
+
+## Vortex File Metadata
+
+ArrowLint recognizes local `*.vortex` and `*.vx` files. The scanner performs
+bounded reads of the fixed file envelope, postscript, and footer. Footer
+inspection is limited to 64 MiB so an untrusted locator cannot exhaust local or
+CI memory. It implements the stable Vortex file metadata schema directly so
+this support does not raise ArrowLint's Rust version requirement to that of the
+latest Vortex crates.
+
+Reference: [Vortex file format specification](https://docs.vortex.dev/specs/file-format)
+
+### `AL301` — Invalid Vortex Container
+
+Validates the leading and trailing `VTXF` magic bytes, file-format version,
+postscript length, and postscript FlatBuffer structure. It reports truncated
+files, unsupported versions, offsets that place the postscript before the file
+body, and malformed postscript metadata.
+
+### `AL302` — Invalid Vortex Postscript Segments
+
+Requires the layout and footer segments and validates every dtype, layout,
+statistics, and footer locator that is present. Segment ranges must end before
+the postscript, offsets must not overlap the leading magic, and offsets must
+satisfy their declared power-of-two alignment.
+
+### `AL303` — Invalid Vortex User Metadata
+
+Validates the postscript's user-defined metadata. A file may contain at most 16
+entries. Every entry must have a segment and a unique, non-empty UTF-8 key no
+longer than 64 bytes. Metadata segment ranges and alignment are also checked.
+
+### `AL304` — Invalid Vortex Footer Segments
+
+Validates the footer FlatBuffer and its required segment registry. Segment
+offsets must be ordered, ranges must remain inside the file, and offsets must
+satisfy their declared alignment. These checks protect lazy reads and the
+aligned buffers used by Vortex's zero-copy design. Footers over the inspection
+limit receive an informational skip diagnostic rather than an error.
+
+Reference: [Vortex serialization internals](https://docs.vortex.dev/developer-guide/internals/serialization)
+
+### `AL305` — Invalid Vortex Registries
+
+Validates the footer's array and layout registries. Every entry must contain a
+non-empty identifier, and an identifier may not appear more than once in the
+same registry.
+
+### `AL306` — Incompatible Vortex Compression
+
+Validates postscript and footer compression specifications. The compression
+registry may contain at most eight entries, and the current stable schemes are
+None, LZ4, ZLib, and ZStd. When the footer itself is compressed or encrypted,
+ArrowLint reports that deep footer checks were skipped rather than treating
+opaque bytes as malformed metadata.
+
+### `AL307` — Missing Vortex Optimization Metadata
+
+Reports independent informational diagnostics when a file omits its top-level
+dtype or file-level statistics. An omitted dtype requires the reader to obtain
+it externally. File-level statistics enable whole-file pruning; their value is
+workload-dependent, so absence is informational rather than invalid.
+
+Reference: [Vortex file-format concepts](https://docs.vortex.dev/concepts/file-format)
+
+## Vortex Scope
+
+The built-in Vortex scanner validates stable, local container metadata. It does
+not decode dtype, layout, statistics, array, or data segments; verify registry
+identifiers against a particular Vortex session; infer editions; or inspect
+custom encodings. Compressed or encrypted footers remain opaque. A clean result
+establishes structural consistency for the inspected metadata, not complete
+readability or optimal encoding and layout choices.
 
 ## Parquet Rule Scope
 

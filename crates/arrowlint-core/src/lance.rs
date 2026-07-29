@@ -73,6 +73,7 @@ pub(crate) fn scan_dataset(path: &Path) -> Result<DatasetFile> {
         row_groups: Vec::new(),
         iceberg_metadata: None,
         lance_metadata: Some(metadata),
+        vortex_metadata: None,
     })
 }
 

@@ -12,10 +12,12 @@ and Arrow-adjacent formats.
   IDs, snapshot references, snapshot logs, and metadata history maintenance.
 - Lance table metadata: manifest envelopes and versions, fragment and data-file
   invariants, feature flags, local references, deletion health, and maintenance.
+- Vortex file metadata: container and postscript integrity, segment bounds and
+  alignment, footer registries, compression compatibility, and optimization
+  metadata.
 
 ## External Rule Packs
 
-- Vortex: encoding selection, chunk sizing, statistics, zero-copy behavior.
 - DuckDB: Arrow export compatibility, nested types, timestamp semantics,
   Parquet writer settings.
 
@@ -26,3 +28,6 @@ future scanner layers; ArrowLint currently validates table metadata JSON only.
 For Lance, ArrowLint decodes the latest local table manifest and verifies
 locally resolvable references. It does not decode schema fields, index sections,
 data pages, deletion-vector contents, remote base paths, branches, or tags.
+For Vortex, ArrowLint reads the fixed envelope, postscript, and an uncompressed,
+unencrypted footer. It does not decode layout, dtype, statistics, array, or data
+segments.

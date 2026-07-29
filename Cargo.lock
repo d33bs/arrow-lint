@@ -343,6 +343,7 @@ version = "0.0.3"
 dependencies = [
  "anyhow",
  "arrow",
+ "flatbuffers",
  "flate2",
  "parquet",
  "prost",

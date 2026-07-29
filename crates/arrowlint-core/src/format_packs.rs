@@ -48,13 +48,13 @@ pub fn known_format_packs() -> Vec<FormatPack> {
         },
         FormatPack {
             name: "vortex",
-            status: "extension-ready",
-            rule_pack: "arrowlint-vortex",
+            status: "built-in-metadata",
+            rule_pack: "arrowlint-core",
             best_practice_focus: &[
-                "array encoding selection",
-                "statistics availability",
-                "chunk sizing",
-                "zero-copy interoperability",
+                "file and postscript integrity",
+                "segment bounds and alignment",
+                "encoding and layout registries",
+                "statistics and dtype portability",
             ],
         },
         FormatPack {

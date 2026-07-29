@@ -74,6 +74,8 @@ pub struct DatasetFile {
     pub iceberg_metadata: Option<serde_json::Value>,
     #[serde(skip)]
     pub lance_metadata: Option<LanceMetadata>,
+    #[serde(skip)]
+    pub vortex_metadata: Option<VortexMetadata>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -140,6 +142,61 @@ pub struct LanceDeletionFile {
     pub id: u64,
     pub num_deleted_rows: u64,
     pub base_id: Option<u32>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct VortexMetadata {
+    pub file_size: u64,
+    pub version: Option<u16>,
+    pub postscript_length: Option<u16>,
+    pub postscript_start: Option<u64>,
+    pub errors: Vec<String>,
+    pub postscript: Option<VortexPostscript>,
+    pub footer: Option<VortexFooter>,
+    pub footer_error: Option<String>,
+    pub footer_skip_reason: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VortexPostscript {
+    pub dtype: Option<VortexSegment>,
+    pub layout: Option<VortexSegment>,
+    pub statistics: Option<VortexSegment>,
+    pub footer: Option<VortexSegment>,
+    pub metadata: Vec<VortexUserMetadata>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VortexUserMetadata {
+    pub key: Option<String>,
+    pub segment: Option<VortexSegment>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VortexSegment {
+    pub offset: u64,
+    pub length: u32,
+    pub alignment_exponent: u8,
+    pub compression_scheme: Option<u8>,
+    pub encrypted: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct VortexFooter {
+    pub array_ids: Vec<Option<String>>,
+    pub layout_ids: Vec<Option<String>>,
+    pub segment_specs: Option<Vec<VortexFooterSegment>>,
+    pub compression_schemes: Vec<u8>,
+    pub encryption_count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct VortexFooterSegment {
+    pub offset: u64,
+    pub length: u32,
+    pub alignment_exponent: u8,
+    pub compression_index: u8,
+    pub encryption_index: u16,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

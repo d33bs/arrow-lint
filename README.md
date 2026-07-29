@@ -9,15 +9,16 @@ a rule system designed for the Arrow ecosystem.
 ## Features
 
 - Rust core engine with a common dataset model.
-- Scanners for Parquet, Arrow IPC, and Feather.
+- Scanners for Parquet, Arrow IPC, Feather, and Vortex files.
 - Iceberg table metadata JSON scanning, including gzip-compressed metadata.
 - Lance table-manifest scanning for local `*.lance` dataset directories.
+- Vortex postscript and footer metadata validation.
 - Python API and Python-first CLI.
 - Native Rust CLI for direct integration.
 - ArrowDiff metadata and statistics comparison for dataset revisions.
 - Built-in rules for schema consistency, metadata, row groups, statistics,
   compression, timestamp portability, dictionary encoding, small files, and
-  Iceberg and Lance metadata integrity.
+  Iceberg, Lance, and Vortex metadata integrity.
 - JSON, SARIF, and human-readable reports.
 - YAML declarative rules for simple metadata checks.
 - Extension points for additional rule packs.
@@ -31,11 +32,11 @@ ArrowLint scans:
 - Feather files
 - Apache Iceberg table metadata files (`*.metadata.json` and gzip variants)
 - Lance dataset directories (`*.lance`)
+- Vortex files (`*.vortex` and `*.vx`)
 
-The project also defines extension boundaries for Vortex and DuckDB-focused
-checks. These formats are represented in the format-pack registry so rule packs
-can share a consistent discovery and reporting model. Iceberg table metadata
-and the latest local Lance manifest are checked by built-in rules.
+The project also defines an extension boundary for DuckDB-focused checks.
+Iceberg table metadata, the latest local Lance manifest, and Vortex container
+metadata are checked by built-in rules.
 
 ## Installation
 
@@ -175,17 +176,18 @@ data teams get a comfortable interface without compromising the Rust fast path.
 ## Extension Strategy
 
 The built-in engine focuses on common Arrow, Feather, Parquet, Iceberg table
-metadata, and Lance table metadata checks. The format pack registry defines
-stable boundaries for specialized rule packs:
+metadata, Lance table metadata, and Vortex file metadata checks. The format
+pack registry defines stable boundaries for specialized rule packs:
 
-- `arrowlint-vortex` for array encodings, chunk sizing, and statistics.
 - `arrowlint-duckdb` for Arrow export round-trips, nested types, timestamps, and writer settings.
 
 Future Iceberg work can extend the built-in metadata scanner into manifest-list,
 manifest, delete-file, and referenced data-file validation without changing the
 public report model. Future Lance work can decode schema and index sections and
-inspect data-file internals using the same model. Other rule packs can start in
-this repository and move to separate packages when their public APIs are stable.
+inspect data-file internals using the same model. Future Vortex work can decode
+layout, dtype, statistics, and array payloads while preserving the bounded
+metadata scan. Other rule packs can start in this repository and move to
+separate packages when their public APIs are stable.
 
 ## Development
 

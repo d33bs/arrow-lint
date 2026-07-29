@@ -35,7 +35,8 @@ pub fn scan_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Dataset> {
             Format::ArrowIpc | Format::Feather => scan_ipc(&path, format)?,
             Format::IcebergMetadata => scan_iceberg_metadata(&path)?,
             Format::LanceDataset => crate::lance::scan_dataset(&path)?,
-            Format::Vortex | Format::DuckDb => scan_planned_format(&path, format)?,
+            Format::Vortex => crate::vortex::scan_file(&path)?,
+            Format::DuckDb => scan_planned_format(&path, format)?,
             Format::Unknown => continue,
         };
         files.push(file);
@@ -178,6 +179,7 @@ fn scan_parquet(path: &Path) -> Result<DatasetFile> {
         row_groups,
         iceberg_metadata: None,
         lance_metadata: None,
+        vortex_metadata: None,
     })
 }
 
@@ -225,6 +227,7 @@ fn scan_ipc(path: &Path, format: Format) -> Result<DatasetFile> {
         row_groups: Vec::new(),
         iceberg_metadata: None,
         lance_metadata: None,
+        vortex_metadata: None,
     })
 }
 
@@ -257,6 +260,7 @@ fn scan_iceberg_metadata(path: &Path) -> Result<DatasetFile> {
         row_groups: Vec::new(),
         iceberg_metadata: Some(metadata),
         lance_metadata: None,
+        vortex_metadata: None,
     })
 }
 
@@ -277,6 +281,7 @@ fn scan_planned_format(path: &Path, format: Format) -> Result<DatasetFile> {
         row_groups: Vec::new(),
         iceberg_metadata: None,
         lance_metadata: None,
+        vortex_metadata: None,
     })
 }
 

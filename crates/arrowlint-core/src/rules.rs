@@ -37,6 +37,7 @@ pub fn builtin_registry() -> RuleRegistry {
     registry.register(InvalidParquetSizeMetadata);
     crate::iceberg::register_rules(&mut registry);
     crate::lance::register_rules(&mut registry);
+    crate::vortex::register_rules(&mut registry);
     registry.register(RecognizedExtensionFormat);
     registry
 }
@@ -884,6 +885,7 @@ impl Rule for RecognizedExtensionFormat {
                 !file.format.is_supported_scanner()
                     && file.format != Format::IcebergMetadata
                     && file.format != Format::LanceDataset
+                    && file.format != Format::Vortex
                     && file.format != Format::Unknown
             })
             .map(|file| {
@@ -896,7 +898,7 @@ impl Rule for RecognizedExtensionFormat {
                 )
                 .with_path(file.path.clone())
                 .with_help(format!(
-                    "planned rule pack: arrowlint-{format}; current built-ins focus on Arrow IPC, Feather, Parquet, Iceberg metadata, and Lance metadata"
+                    "planned rule pack: arrowlint-{format}; current built-ins focus on Arrow IPC, Feather, Parquet, Iceberg metadata, Lance metadata, and Vortex metadata"
                 ))
             })
             .collect()
@@ -1189,7 +1191,8 @@ mod tests {
         for rule_id in [
             "AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015", "AL101", "AL102",
             "AL103", "AL104", "AL105", "AL106", "AL107", "AL201", "AL202", "AL203", "AL204",
-            "AL205", "AL206", "AL207",
+            "AL205", "AL206", "AL207", "AL301", "AL302", "AL303", "AL304", "AL305", "AL306",
+            "AL307",
         ] {
             assert!(ids.contains(rule_id), "{rule_id} should be registered");
         }
@@ -1218,6 +1221,7 @@ mod tests {
             row_groups: Vec::new(),
             iceberg_metadata: None,
             lance_metadata: None,
+            vortex_metadata: None,
         }
     }
 
@@ -1234,6 +1238,7 @@ mod tests {
                 row_groups,
                 iceberg_metadata: None,
                 lance_metadata: None,
+                vortex_metadata: None,
             }],
         }
     }
