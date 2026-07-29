@@ -1,11 +1,13 @@
 use std::{
     collections::BTreeMap,
     fs::File,
+    io::Read,
     path::{Path, PathBuf},
 };
 
 use anyhow::{anyhow, Context, Result};
 use arrow::{datatypes::SchemaRef, ipc::reader};
+use flate2::read::GzDecoder;
 use parquet::{
     arrow::arrow_reader::ParquetRecordBatchReaderBuilder,
     file::reader::{FileReader, SerializedFileReader},
@@ -31,7 +33,8 @@ pub fn scan_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Dataset> {
         let file = match format {
             Format::Parquet => scan_parquet(&path)?,
             Format::ArrowIpc | Format::Feather => scan_ipc(&path, format)?,
-            Format::IcebergMetadata | Format::LanceDataset | Format::Vortex | Format::DuckDb => {
+            Format::IcebergMetadata => scan_iceberg_metadata(&path)?,
+            Format::LanceDataset | Format::Vortex | Format::DuckDb => {
                 scan_planned_format(&path, format)?
             }
             Format::Unknown => continue,
@@ -144,6 +147,7 @@ fn scan_parquet(path: &Path) -> Result<DatasetFile> {
         schema,
         metadata: key_values,
         row_groups,
+        iceberg_metadata: None,
     })
 }
 
@@ -189,7 +193,44 @@ fn scan_ipc(path: &Path, format: Format) -> Result<DatasetFile> {
         schema: Some(schema),
         metadata: BTreeMap::new(),
         row_groups: Vec::new(),
+        iceberg_metadata: None,
     })
+}
+
+fn scan_iceberg_metadata(path: &Path) -> Result<DatasetFile> {
+    let raw = std::fs::read(path).with_context(|| format!("failed to read {}", path.display()))?;
+    let decoded = if is_gzip_iceberg_metadata(path) {
+        let mut decoded = Vec::new();
+        GzDecoder::new(raw.as_slice())
+            .read_to_end(&mut decoded)
+            .with_context(|| format!("failed to decompress Iceberg metadata {}", path.display()))?;
+        decoded
+    } else {
+        raw.clone()
+    };
+    let metadata: serde_json::Value = serde_json::from_slice(&decoded)
+        .with_context(|| format!("failed to parse Iceberg metadata {}", path.display()))?;
+    if !metadata.is_object() {
+        return Err(anyhow!(
+            "Iceberg metadata root must be a JSON object: {}",
+            path.display()
+        ));
+    }
+    Ok(DatasetFile {
+        path: path.display().to_string(),
+        format: Format::IcebergMetadata,
+        size_bytes: raw.len() as u64,
+        num_rows: None,
+        schema: None,
+        metadata: BTreeMap::new(),
+        row_groups: Vec::new(),
+        iceberg_metadata: Some(metadata),
+    })
+}
+
+fn is_gzip_iceberg_metadata(path: &Path) -> bool {
+    let lower = path.to_string_lossy().to_ascii_lowercase();
+    lower.ends_with(".gz.metadata.json") || lower.ends_with(".metadata.json.gz")
 }
 
 fn scan_planned_format(path: &Path, format: Format) -> Result<DatasetFile> {
@@ -202,6 +243,7 @@ fn scan_planned_format(path: &Path, format: Format) -> Result<DatasetFile> {
         schema: None,
         metadata: BTreeMap::new(),
         row_groups: Vec::new(),
+        iceberg_metadata: None,
     })
 }
 

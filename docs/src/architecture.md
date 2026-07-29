@@ -39,10 +39,15 @@ Every scanner returns the same model:
 - size and row counts
 - Arrow schema fields and metadata
 - Parquet row groups and column chunk metadata where available
+- parsed Iceberg table metadata retained internally during rule evaluation
 
 This keeps rules format-aware without making every rule parse every format.
 ArrowDiff reuses the same model to compare field structure, metadata, Parquet
 statistics, row-group layout, compression, and estimated scan bytes.
+
+Iceberg metadata JSON is parsed once by the scanner and retained outside the
+serialized report model. This avoids reparsing for every rule and prevents a
+complete table history from being duplicated into JSON and SARIF reports.
 
 ## Extension Point
 

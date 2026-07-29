@@ -72,6 +72,8 @@ impl Default for ScanConfig {
 pub struct RuleConfig {
     pub min_row_group_rows: u64,
     pub small_file_bytes: u64,
+    pub iceberg_max_snapshots: usize,
+    pub iceberg_max_metadata_log_entries: usize,
     pub fail_on: Severity,
     pub only: BTreeSet<String>,
     pub disabled: BTreeSet<String>,
@@ -83,6 +85,8 @@ impl Default for RuleConfig {
         Self {
             min_row_group_rows: 100_000,
             small_file_bytes: 64 * 1024 * 1024,
+            iceberg_max_snapshots: 100,
+            iceberg_max_metadata_log_entries: 100,
             fail_on: Severity::Error,
             only: BTreeSet::new(),
             disabled: BTreeSet::new(),

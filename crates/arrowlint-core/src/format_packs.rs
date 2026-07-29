@@ -35,14 +35,15 @@ pub fn known_format_packs() -> Vec<FormatPack> {
         },
         FormatPack {
             name: "iceberg",
-            status: "extension-ready",
-            rule_pack: "arrowlint-iceberg",
+            status: "built-in-metadata",
+            rule_pack: "arrowlint-core",
             best_practice_focus: &[
+                "format version and required fields",
+                "schema and partition field IDs",
                 "partition evolution",
                 "snapshot metadata",
-                "manifest sizing",
-                "delete file strategy",
-                "Arrow schema compatibility",
+                "reference integrity",
+                "metadata history maintenance",
             ],
         },
         FormatPack {

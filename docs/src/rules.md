@@ -1,9 +1,10 @@
 # Rules
 
-ArrowLint ships with built-in rules for common Arrow and Parquet quality issues.
-Rules classified as errors identify internally inconsistent metadata. Warnings
-identify deprecated features or broadly applicable interoperability and
-performance concerns. Informational diagnostics identify review opportunities.
+ArrowLint ships with built-in rules for common Arrow, Parquet, and Iceberg
+quality issues. Rules classified as errors identify internally inconsistent
+metadata. Warnings identify deprecated features or broadly applicable
+interoperability and performance concerns. Informational diagnostics identify
+review opportunities.
 
 | Rule    | Severity | Category         | Purpose                                                 |
 | ------- | -------- | ---------------- | ------------------------------------------------------- |
@@ -23,6 +24,13 @@ performance concerns. Informational diagnostics identify review opportunities.
 | `AL014` | warning  | metadata         | flags statistics that omit explicit null counts         |
 | `AL015` | error    | correctness      | flags negative Parquet counts and byte sizes            |
 | `AL100` | info     | extension        | identifies inputs handled by external format packs      |
+| `AL101` | error    | iceberg          | flags missing or unsupported Iceberg format versions    |
+| `AL102` | error    | iceberg          | flags invalid required Iceberg table metadata           |
+| `AL103` | error    | iceberg          | flags broken current, default, and snapshot references  |
+| `AL104` | error    | iceberg          | flags duplicate schema, spec, sort, and snapshot IDs    |
+| `AL105` | error    | iceberg          | flags inconsistent snapshots and snapshot logs          |
+| `AL106` | error    | iceberg          | flags invalid schema and partition field IDs            |
+| `AL107` | info     | maintenance      | flags large snapshot and metadata histories             |
 
 ## Parquet Validity and Compatibility
 
@@ -112,12 +120,93 @@ Negative values are structurally invalid and are reported as errors.
 
 Reference: [Parquet metadata structures](https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift)
 
-## Rule Scope
+## Iceberg Table Metadata
 
-The new validity checks are metadata-only. They do not decode data pages or
+ArrowLint recognizes standard `*.metadata.json`, `*.gz.metadata.json`, and
+`*.metadata.json.gz` files. The scanner parses table metadata once and applies
+`AL101` through `AL107`. These rules follow the adopted Iceberg format versions
+1 through 3. Version 4 remains under development and is not accepted until it is
+formally adopted and implemented.
+
+Reference: [Iceberg format versioning](https://iceberg.apache.org/spec/#format-versioning)
+
+### `AL101` — Unsupported Iceberg Format Version
+
+Reports a missing, non-integer, or unsupported `format-version`. Iceberg readers
+must reject versions newer than they support. ArrowLint accepts the adopted
+versions 1, 2, and 3.
+
+### `AL102` — Invalid Required Iceberg Metadata
+
+Validates version-specific required fields, including the table location,
+update time, column ID high-water mark, schemas, partition specs, sort orders,
+table UUID, sequence number, and v3 row-lineage high-water mark. Locations must
+be absolute, and counters and timestamps must be non-negative.
+
+Reference: [Iceberg table metadata fields](https://iceberg.apache.org/spec/#table-metadata-fields)
+
+### `AL103` — Invalid Iceberg References
+
+Checks that `current-schema-id`, `default-spec-id`,
+`default-sort-order-id`, `current-snapshot-id`, and named snapshot references
+point to entries retained in the same metadata file. When `refs` is present,
+the `main` branch must match the current snapshot.
+
+### `AL104` — Duplicate Iceberg Identifiers
+
+Reports duplicate schema IDs, partition spec IDs, sort-order IDs, and snapshot
+IDs. These identifiers are the stable links used by manifests, snapshots, and
+writers; ambiguity can make table state unreadable.
+
+### `AL105` — Invalid Iceberg Snapshots
+
+Validates required snapshot fields by format version, sequence-number bounds,
+manifest-list usage, summary operations, schema references, v3 row-lineage
+fields, and snapshot-log ordering. The latest snapshot-log entry must match the
+current snapshot, and log timestamps cannot be later than `last-updated-ms`.
+
+Reference: [Iceberg snapshots](https://iceberg.apache.org/spec/#snapshots)
+
+### `AL106` — Invalid Iceberg Field IDs
+
+Recursively checks struct, list, and map field IDs for uniqueness and positive
+values. It verifies that `last-column-id` and `last-partition-id` are not below
+assigned IDs and that partition and sort fields reference known schema fields.
+
+Reference: [Iceberg schema and partition evolution](https://iceberg.apache.org/spec/#partition-evolution)
+
+### `AL107` — Iceberg Metadata Maintenance
+
+Reports an informational diagnostic when retained snapshots or metadata-log
+entries exceed configured limits. Defaults are 100 entries for each history:
+
+```yaml
+rules:
+  iceberg_max_snapshots: 100
+  iceberg_max_metadata_log_entries: 100
+```
+
+Set a threshold to `0` to disable that measurement. Retention requirements vary,
+so this rule does not prescribe deletion; it prompts review of time-travel needs,
+snapshot expiration, `write.metadata.previous-versions-max`, and
+`write.metadata.delete-after-commit.enabled`.
+
+Reference: [Iceberg maintenance recommendations](https://iceberg.apache.org/docs/latest/maintenance/)
+
+## Iceberg Scope
+
+The built-in Iceberg scanner validates table metadata JSON. It does not yet open
+manifest lists or manifests, verify referenced files exist, detect duplicate
+data-file paths, inspect delete-file strategy, or measure manifest and data-file
+sizes. A clean metadata result therefore establishes internal table-metadata
+consistency, not complete table health.
+
+## Parquet Rule Scope
+
+The Parquet validity checks are metadata-only. They do not decode data pages or
 compare stored statistics with every physical value. A clean result therefore
-means the inspected footer metadata is internally consistent; it does not
-prove that the complete file contents are uncorrupted.
+means the inspected footer metadata is internally consistent; it does not prove
+that the complete file contents are uncorrupted.
 
 ## Selecting Rules
 

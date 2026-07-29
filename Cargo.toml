@@ -17,6 +17,7 @@ rust-version = "1.82"
 anyhow = "1.0"
 arrow = "59.1.0"
 clap = { version = "4.6.4", features = ["derive"] }
+flate2 = "1"
 parquet = "59.1.0"
 pyo3 = "0.29.0"
 serde = { version = "1.0", features = ["derive"] }

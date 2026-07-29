@@ -14,10 +14,26 @@ def test_rules_exposes_builtin_metadata() -> None:
 
     assert rules_by_id["AL003"]["default_severity"] == "error"
     assert set(rules_by_id).issuperset(
-        {"AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015"}
+        {
+            "AL009",
+            "AL010",
+            "AL011",
+            "AL012",
+            "AL013",
+            "AL014",
+            "AL015",
+            "AL101",
+            "AL102",
+            "AL103",
+            "AL104",
+            "AL105",
+            "AL106",
+            "AL107",
+        }
     )
     assert rules_by_id["AL012"]["default_severity"] == "error"
     assert rules_by_id["AL014"]["default_severity"] == "warning"
+    assert rules_by_id["AL107"]["default_severity"] == "info"
 
 
 def test_formats_exposes_extension_targets() -> None:
@@ -25,6 +41,14 @@ def test_formats_exposes_extension_targets() -> None:
 
     assert any(format_pack["name"] == "iceberg" for format_pack in known_formats)
     assert any(format_pack["name"] == "duckdb" for format_pack in known_formats)
+    assert (
+        next(
+            format_pack["status"]
+            for format_pack in known_formats
+            if format_pack["name"] == "iceberg"
+        )
+        == "built-in-metadata"
+    )
 
 
 def test_lint_forwards_rule_selection(monkeypatch: MonkeyPatch) -> None:

@@ -24,7 +24,7 @@ impl Format {
             Self::Feather
         } else if lower.ends_with(".arrow") || lower.ends_with(".ipc") {
             Self::ArrowIpc
-        } else if lower.ends_with("metadata.json") && lower.contains("iceberg") {
+        } else if lower.ends_with(".metadata.json") || lower.ends_with(".metadata.json.gz") {
             Self::IcebergMetadata
         } else if lower.ends_with(".lance") || lower.contains(".lance/") {
             Self::LanceDataset
@@ -70,6 +70,8 @@ pub struct DatasetFile {
     pub schema: Option<SchemaModel>,
     pub metadata: BTreeMap<String, String>,
     pub row_groups: Vec<RowGroupModel>,
+    #[serde(skip)]
+    pub iceberg_metadata: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

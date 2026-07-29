@@ -35,6 +35,7 @@ pub fn builtin_registry() -> RuleRegistry {
     registry.register(InconsistentParquetRowCounts);
     registry.register(MissingParquetNullCounts);
     registry.register(InvalidParquetSizeMetadata);
+    crate::iceberg::register_rules(&mut registry);
     registry.register(RecognizedExtensionFormat);
     registry
 }
@@ -878,7 +879,11 @@ impl Rule for RecognizedExtensionFormat {
         dataset
             .files
             .iter()
-            .filter(|file| !file.format.is_supported_scanner() && file.format != Format::Unknown)
+            .filter(|file| {
+                !file.format.is_supported_scanner()
+                    && file.format != Format::IcebergMetadata
+                    && file.format != Format::Unknown
+            })
             .map(|file| {
                 let format = file.format.as_str();
                 Diagnostic::new(
@@ -889,7 +894,7 @@ impl Rule for RecognizedExtensionFormat {
                 )
                 .with_path(file.path.clone())
                 .with_help(format!(
-                    "planned rule pack: arrowlint-{format}; current built-ins focus on Arrow IPC, Feather, and Parquet"
+                    "planned rule pack: arrowlint-{format}; current built-ins focus on Arrow IPC, Feather, Parquet, and Iceberg metadata"
                 ))
             })
             .collect()
@@ -1174,13 +1179,14 @@ mod tests {
     }
 
     #[test]
-    fn builtin_rule_ids_are_unique_and_include_parquet_validity_rules() {
+    fn builtin_rule_ids_are_unique_and_include_format_validity_rules() {
         let metadata = builtin_registry().metadata();
         let ids = metadata.iter().map(|rule| rule.id).collect::<BTreeSet<_>>();
 
         assert_eq!(ids.len(), metadata.len());
         for rule_id in [
-            "AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015",
+            "AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015", "AL101", "AL102",
+            "AL103", "AL104", "AL105", "AL106", "AL107",
         ] {
             assert!(ids.contains(rule_id), "{rule_id} should be registered");
         }
@@ -1207,6 +1213,7 @@ mod tests {
             }),
             metadata: BTreeMap::new(),
             row_groups: Vec::new(),
+            iceberg_metadata: None,
         }
     }
 
@@ -1221,6 +1228,7 @@ mod tests {
                 schema: None,
                 metadata: BTreeMap::new(),
                 row_groups,
+                iceberg_metadata: None,
             }],
         }
     }
