@@ -407,10 +407,11 @@
                   
   <section id="rules">
 <h1>Rules<a class="headerlink" href="#rules" title="Link to this heading">#</a></h1>
-<p>ArrowLint ships with built-in rules for common Arrow and Parquet quality issues.
-Rules classified as errors identify internally inconsistent metadata. Warnings
-identify deprecated features or broadly applicable interoperability and
-performance concerns. Informational diagnostics identify review opportunities.</p>
+<p>ArrowLint ships with built-in rules for common Arrow IPC, Parquet, GeoParquet,
+Iceberg, Lance, and Vortex quality issues. Rules classified as errors identify
+internally inconsistent metadata. Warnings identify deprecated features or
+broadly applicable interoperability and performance concerns. Informational
+diagnostics identify review opportunities.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Rule</p></th>
@@ -495,14 +496,240 @@ performance concerns. Informational diagnostics identify review opportunities.</
 <td><p>correctness</p></td>
 <td><p>flags negative Parquet counts and byte sizes</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL016</span></code></p></td>
+<td><p>error</p></td>
+<td><p>correctness</p></td>
+<td><p>flags invalid Arrow IPC stream structure</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL017</span></code></p></td>
+<td><p>warning</p></td>
+<td><p>interoperability</p></td>
+<td><p>flags legacy Arrow IPC stream framing</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL018</span></code></p></td>
+<td><p>error</p></td>
+<td><p>geoparquet</p></td>
+<td><p>flags invalid GeoParquet file metadata</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL019</span></code></p></td>
+<td><p>error</p></td>
+<td><p>geoparquet</p></td>
+<td><p>flags invalid GeoParquet geometry columns</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL020</span></code></p></td>
+<td><p>error</p></td>
+<td><p>geoparquet</p></td>
+<td><p>flags invalid GeoParquet spatial metadata</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL021</span></code></p></td>
+<td><p>info</p></td>
+<td><p>performance</p></td>
+<td><p>reports missing GeoParquet pruning metadata</p></td>
+</tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL100</span></code></p></td>
 <td><p>info</p></td>
 <td><p>extension</p></td>
 <td><p>identifies inputs handled by external format packs</p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL101</span></code></p></td>
+<td><p>error</p></td>
+<td><p>iceberg</p></td>
+<td><p>flags missing or unsupported Iceberg format versions</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL102</span></code></p></td>
+<td><p>error</p></td>
+<td><p>iceberg</p></td>
+<td><p>flags invalid required Iceberg table metadata</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL103</span></code></p></td>
+<td><p>error</p></td>
+<td><p>iceberg</p></td>
+<td><p>flags broken current, default, and snapshot references</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL104</span></code></p></td>
+<td><p>error</p></td>
+<td><p>iceberg</p></td>
+<td><p>flags duplicate schema, spec, sort, and snapshot IDs</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL105</span></code></p></td>
+<td><p>error</p></td>
+<td><p>iceberg</p></td>
+<td><p>flags inconsistent snapshots and snapshot logs</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL106</span></code></p></td>
+<td><p>error</p></td>
+<td><p>iceberg</p></td>
+<td><p>flags invalid schema and partition field IDs</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL107</span></code></p></td>
+<td><p>info</p></td>
+<td><p>maintenance</p></td>
+<td><p>flags large snapshot and metadata histories</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL201</span></code></p></td>
+<td><p>error</p></td>
+<td><p>lance</p></td>
+<td><p>flags invalid or inconsistent Lance manifests</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL202</span></code></p></td>
+<td><p>error</p></td>
+<td><p>lance</p></td>
+<td><p>flags invalid Lance fragment identifiers</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL203</span></code></p></td>
+<td><p>error</p></td>
+<td><p>lance</p></td>
+<td><p>flags invalid Lance data-file field mappings</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL204</span></code></p></td>
+<td><p>error</p></td>
+<td><p>lance</p></td>
+<td><p>flags invalid Lance deletion metadata</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL205</span></code></p></td>
+<td><p>error</p></td>
+<td><p>interoperability</p></td>
+<td><p>flags unsupported or inconsistent Lance features</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL206</span></code></p></td>
+<td><p>error</p></td>
+<td><p>lance</p></td>
+<td><p>flags missing or inconsistent local Lance references</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL207</span></code></p></td>
+<td><p>info</p></td>
+<td><p>maintenance</p></td>
+<td><p>flags Lance compaction and retention opportunities</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL301</span></code></p></td>
+<td><p>error</p></td>
+<td><p>vortex</p></td>
+<td><p>flags invalid Vortex envelopes and postscripts</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL302</span></code></p></td>
+<td><p>error</p></td>
+<td><p>vortex</p></td>
+<td><p>flags invalid Vortex postscript segment locators</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL303</span></code></p></td>
+<td><p>error</p></td>
+<td><p>vortex</p></td>
+<td><p>flags invalid Vortex user metadata</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL304</span></code></p></td>
+<td><p>error</p></td>
+<td><p>vortex</p></td>
+<td><p>flags invalid Vortex footer segment registries</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL305</span></code></p></td>
+<td><p>error</p></td>
+<td><p>vortex</p></td>
+<td><p>flags invalid Vortex array and layout registries</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AL306</span></code></p></td>
+<td><p>error</p></td>
+<td><p>interoperability</p></td>
+<td><p>flags incompatible Vortex compression metadata</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">AL307</span></code></p></td>
+<td><p>info</p></td>
+<td><p>performance</p></td>
+<td><p>reports missing Vortex optimization metadata</p></td>
+</tr>
 </tbody>
 </table>
 </div>
+<section id="arrow-ipc-streams">
+<h2>Arrow IPC Streams<a class="headerlink" href="#arrow-ipc-streams" title="Link to this heading">#</a></h2>
+<p>ArrowLint recognizes stored Arrow IPC streams with the recommended <code class="docutils literal notranslate"><span class="pre">*.arrows</span></code>
+extension, as well as streams stored with the historical <code class="docutils literal notranslate"><span class="pre">*.arrow</span></code> or generic
+<code class="docutils literal notranslate"><span class="pre">*.ipc</span></code> extensions. The scanner distinguishes IPC files from streams and reads
+record batches through the same Arrow implementation after inspecting stream
+framing.</p>
+<p>Reference: <a class="reference external" href="https://arrow.apache.org/docs/format/Columnar.html#serialization-and-interprocess-communication-ipc">Arrow IPC format</a></p>
+<section id="al016-invalid-arrow-ipc-stream">
+<h3><code class="docutils literal notranslate"><span class="pre">AL016</span></code> — Invalid Arrow IPC Stream<a class="headerlink" href="#al016-invalid-arrow-ipc-stream" title="Link to this heading">#</a></h3>
+<p>Validates continuation and metadata-length prefixes, bounded FlatBuffer
+metadata, message and body alignment, schema placement, allowed message types,
+body ranges, and EOS placement. The schema must be the first and only schema
+message. Arrow’s record-batch reader then validates the schema, dictionaries,
+buffers, and arrays; decoding failures are reported by this rule instead of
+aborting the complete lint run.</p>
+<p>The explicit EOS marker is optional for streams, so reaching the physical end
+of a stored stream after a complete message is valid. Bytes following an
+explicit EOS marker are invalid.</p>
+</section>
+<section id="al017-legacy-arrow-ipc-stream-framing">
+<h3><code class="docutils literal notranslate"><span class="pre">AL017</span></code> — Legacy Arrow IPC Stream Framing<a class="headerlink" href="#al017-legacy-arrow-ipc-stream-framing" title="Link to this heading">#</a></h3>
+<p>Reports streams whose messages omit the continuation marker introduced in Arrow
+0.15. Legacy length-only framing remains readable, so this is an
+interoperability warning rather than an error. Rewriting adds deterministic
+8-byte framing alignment expected by current producers and consumers.</p>
+</section>
+</section>
+<section id="arrow-ipc-stream-scope">
+<h2>Arrow IPC Stream Scope<a class="headerlink" href="#arrow-ipc-stream-scope" title="Link to this heading">#</a></h2>
+<p>The scanner validates local stored streams; it does not connect to live stream
+interfaces, Arrow Flight endpoints, or the Arrow C Stream interface. It limits
+individual message metadata inspection to 64 MiB. Record-batch bodies are
+decoded by Arrow’s safe reader and are not retained in the report model.</p>
+</section>
+<section id="geoparquet-metadata">
+<h2>GeoParquet Metadata<a class="headerlink" href="#geoparquet-metadata" title="Link to this heading">#</a></h2>
+<p>ArrowLint activates GeoParquet rules when a Parquet file contains a <code class="docutils literal notranslate"><span class="pre">geo</span></code>
+file-metadata key. It supports GeoParquet major version 1, validates all fields
+it relies on, and ignores unknown fields so future compatible minor versions do
+not fail solely because they add metadata.</p>
+<p>Reference: <a class="reference external" href="https://geoparquet.org/releases/v1.1.0/">GeoParquet 1.1 specification</a></p>
+<section id="al018-invalid-geoparquet-metadata">
+<h3><code class="docutils literal notranslate"><span class="pre">AL018</span></code> — Invalid GeoParquet Metadata<a class="headerlink" href="#al018-invalid-geoparquet-metadata" title="Link to this heading">#</a></h3>
+<p>Requires exactly one <code class="docutils literal notranslate"><span class="pre">geo</span></code> key containing a JSON object with:</p>
+<ul class="simple">
+<li><p>A semantic version in the supported major version.</p></li>
+<li><p>A non-empty <code class="docutils literal notranslate"><span class="pre">primary_column</span></code>.</p></li>
+<li><p>A non-empty <code class="docutils literal notranslate"><span class="pre">columns</span></code> object.</p></li>
+</ul>
+<p>Malformed JSON, duplicate <code class="docutils literal notranslate"><span class="pre">geo</span></code> entries, malformed versions, and unsupported
+major versions are errors.</p>
+</section>
+<section id="al019-invalid-geoparquet-columns">
+<h3><code class="docutils literal notranslate"><span class="pre">AL019</span></code> — Invalid GeoParquet Columns<a class="headerlink" href="#al019-invalid-geoparquet-columns" title="Link to this heading">#</a></h3>
+<p>Checks that the primary geometry appears in <code class="docutils literal notranslate"><span class="pre">geo.columns</span></code>, every declared
+geometry column exists at the root of the Parquet schema, and each column has a
+supported encoding and unique valid geometry types. GeoParquet 1.0 accepts WKB;
+GeoParquet 1.1 and later 1.x metadata may also use the native GeoArrow-derived
+single-geometry encodings. WKB columns must use the Parquet <code class="docutils literal notranslate"><span class="pre">BYTE_ARRAY</span></code>
+physical type.</p>
+</section>
+<section id="al020-invalid-geoparquet-spatial-metadata">
+<h3><code class="docutils literal notranslate"><span class="pre">AL020</span></code> — Invalid GeoParquet Spatial Metadata<a class="headerlink" href="#al020-invalid-geoparquet-spatial-metadata" title="Link to this heading">#</a></h3>
+<p>Validates the structural requirements used to interpret optional spatial
+metadata:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">crs</span></code> is an object or explicit null, and <code class="docutils literal notranslate"><span class="pre">epoch</span></code> is numeric.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">orientation</span></code> is <code class="docutils literal notranslate"><span class="pre">counterclockwise</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">edges</span></code> is <code class="docutils literal notranslate"><span class="pre">planar</span></code> or <code class="docutils literal notranslate"><span class="pre">spherical</span></code>.</p></li>
+<li><p>File bounds contain ordered minima and maxima for two or three dimensions.</p></li>
+<li><p>Bounding-box coverings provide all four canonical paths, use one root
+column, and reference a root field present in the Parquet schema.</p></li>
+</ul>
+</section>
+<section id="al021-missing-geoparquet-pruning-metadata">
+<h3><code class="docutils literal notranslate"><span class="pre">AL021</span></code> — Missing GeoParquet Pruning Metadata<a class="headerlink" href="#al021-missing-geoparquet-pruning-metadata" title="Link to this heading">#</a></h3>
+<p>Reports an informational diagnostic when a geometry column has neither a
+file-level <code class="docutils literal notranslate"><span class="pre">bbox</span></code> nor a per-row bounding-box <code class="docutils literal notranslate"><span class="pre">covering</span></code>. Both fields are
+optional, but they can reduce spatial scan work through file, row-group, and
+page pruning.</p>
+</section>
+</section>
+<section id="geoparquet-scope">
+<h2>GeoParquet Scope<a class="headerlink" href="#geoparquet-scope" title="Link to this heading">#</a></h2>
+<p>GeoParquet checks inspect Parquet schema and footer metadata. They do not decode
+WKB values, prove that declared geometry types match every value, validate a CRS
+against the complete PROJJSON schema, verify native geometry child layouts, or
+compare bounds and coverings with coordinate values. A clean result establishes
+structural metadata consistency, not geometric validity.</p>
+</section>
 <section id="parquet-validity-and-compatibility">
 <h2>Parquet Validity and Compatibility<a class="headerlink" href="#parquet-validity-and-compatibility" title="Link to this heading">#</a></h2>
 <section id="al009-deprecated-parquet-physical-types">
@@ -582,12 +809,237 @@ Negative values are structurally invalid and are reported as errors.</p>
 <p>Reference: <a class="reference external" href="https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift">Parquet metadata structures</a></p>
 </section>
 </section>
-<section id="rule-scope">
-<h2>Rule Scope<a class="headerlink" href="#rule-scope" title="Link to this heading">#</a></h2>
-<p>The new validity checks are metadata-only. They do not decode data pages or
+<section id="iceberg-table-metadata">
+<h2>Iceberg Table Metadata<a class="headerlink" href="#iceberg-table-metadata" title="Link to this heading">#</a></h2>
+<p>ArrowLint recognizes standard <code class="docutils literal notranslate"><span class="pre">*.metadata.json</span></code>, <code class="docutils literal notranslate"><span class="pre">*.gz.metadata.json</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">*.metadata.json.gz</span></code> files. The scanner parses table metadata once and applies
+<code class="docutils literal notranslate"><span class="pre">AL101</span></code> through <code class="docutils literal notranslate"><span class="pre">AL107</span></code>. These rules follow the adopted Iceberg format versions
+1 through 3. Version 4 remains under development and is not accepted until it is
+formally adopted and implemented.</p>
+<p>Reference: <a class="reference external" href="https://iceberg.apache.org/spec/#format-versioning">Iceberg format versioning</a></p>
+<section id="al101-unsupported-iceberg-format-version">
+<h3><code class="docutils literal notranslate"><span class="pre">AL101</span></code> — Unsupported Iceberg Format Version<a class="headerlink" href="#al101-unsupported-iceberg-format-version" title="Link to this heading">#</a></h3>
+<p>Reports a missing, non-integer, or unsupported <code class="docutils literal notranslate"><span class="pre">format-version</span></code>. Iceberg readers
+must reject versions newer than they support. ArrowLint accepts the adopted
+versions 1, 2, and 3.</p>
+</section>
+<section id="al102-invalid-required-iceberg-metadata">
+<h3><code class="docutils literal notranslate"><span class="pre">AL102</span></code> — Invalid Required Iceberg Metadata<a class="headerlink" href="#al102-invalid-required-iceberg-metadata" title="Link to this heading">#</a></h3>
+<p>Validates version-specific required fields, including the table location,
+update time, column ID high-water mark, schemas, partition specs, sort orders,
+table UUID, sequence number, and v3 row-lineage high-water mark. Locations must
+be absolute, and counters and timestamps must be non-negative.</p>
+<p>Reference: <a class="reference external" href="https://iceberg.apache.org/spec/#table-metadata-fields">Iceberg table metadata fields</a></p>
+</section>
+<section id="al103-invalid-iceberg-references">
+<h3><code class="docutils literal notranslate"><span class="pre">AL103</span></code> — Invalid Iceberg References<a class="headerlink" href="#al103-invalid-iceberg-references" title="Link to this heading">#</a></h3>
+<p>Checks that <code class="docutils literal notranslate"><span class="pre">current-schema-id</span></code>, <code class="docutils literal notranslate"><span class="pre">default-spec-id</span></code>,
+<code class="docutils literal notranslate"><span class="pre">default-sort-order-id</span></code>, <code class="docutils literal notranslate"><span class="pre">current-snapshot-id</span></code>, and named snapshot references
+point to entries retained in the same metadata file. When <code class="docutils literal notranslate"><span class="pre">refs</span></code> is present,
+the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch must match the current snapshot.</p>
+</section>
+<section id="al104-duplicate-iceberg-identifiers">
+<h3><code class="docutils literal notranslate"><span class="pre">AL104</span></code> — Duplicate Iceberg Identifiers<a class="headerlink" href="#al104-duplicate-iceberg-identifiers" title="Link to this heading">#</a></h3>
+<p>Reports duplicate schema IDs, partition spec IDs, sort-order IDs, and snapshot
+IDs. These identifiers are the stable links used by manifests, snapshots, and
+writers; ambiguity can make table state unreadable.</p>
+</section>
+<section id="al105-invalid-iceberg-snapshots">
+<h3><code class="docutils literal notranslate"><span class="pre">AL105</span></code> — Invalid Iceberg Snapshots<a class="headerlink" href="#al105-invalid-iceberg-snapshots" title="Link to this heading">#</a></h3>
+<p>Validates required snapshot fields by format version, sequence-number bounds,
+manifest-list usage, summary operations, schema references, v3 row-lineage
+fields, and snapshot-log ordering. The latest snapshot-log entry must match the
+current snapshot, and log timestamps cannot be later than <code class="docutils literal notranslate"><span class="pre">last-updated-ms</span></code>.</p>
+<p>Reference: <a class="reference external" href="https://iceberg.apache.org/spec/#snapshots">Iceberg snapshots</a></p>
+</section>
+<section id="al106-invalid-iceberg-field-ids">
+<h3><code class="docutils literal notranslate"><span class="pre">AL106</span></code> — Invalid Iceberg Field IDs<a class="headerlink" href="#al106-invalid-iceberg-field-ids" title="Link to this heading">#</a></h3>
+<p>Recursively checks struct, list, and map field IDs for uniqueness and positive
+values. It verifies that <code class="docutils literal notranslate"><span class="pre">last-column-id</span></code> and <code class="docutils literal notranslate"><span class="pre">last-partition-id</span></code> are not below
+assigned IDs and that partition and sort fields reference known schema fields.</p>
+<p>Reference: <a class="reference external" href="https://iceberg.apache.org/spec/#partition-evolution">Iceberg schema and partition evolution</a></p>
+</section>
+<section id="al107-iceberg-metadata-maintenance">
+<h3><code class="docutils literal notranslate"><span class="pre">AL107</span></code> — Iceberg Metadata Maintenance<a class="headerlink" href="#al107-iceberg-metadata-maintenance" title="Link to this heading">#</a></h3>
+<p>Reports an informational diagnostic when retained snapshots or metadata-log
+entries exceed configured limits. Defaults are 100 entries for each history:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">iceberg_max_snapshots</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">iceberg_max_metadata_log_entries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+</pre></div>
+</div>
+<p>Set a threshold to <code class="docutils literal notranslate"><span class="pre">0</span></code> to disable that measurement. Retention requirements vary,
+so this rule does not prescribe deletion; it prompts review of time-travel needs,
+snapshot expiration, <code class="docutils literal notranslate"><span class="pre">write.metadata.previous-versions-max</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">write.metadata.delete-after-commit.enabled</span></code>.</p>
+<p>Reference: <a class="reference external" href="https://iceberg.apache.org/docs/latest/maintenance/">Iceberg maintenance recommendations</a></p>
+</section>
+</section>
+<section id="iceberg-scope">
+<h2>Iceberg Scope<a class="headerlink" href="#iceberg-scope" title="Link to this heading">#</a></h2>
+<p>The built-in Iceberg scanner validates table metadata JSON. It does not yet open
+manifest lists or manifests, verify referenced files exist, detect duplicate
+data-file paths, inspect delete-file strategy, or measure manifest and data-file
+sizes. A clean metadata result therefore establishes internal table-metadata
+consistency, not complete table health.</p>
+</section>
+<section id="lance-table-metadata">
+<h2>Lance Table Metadata<a class="headerlink" href="#lance-table-metadata" title="Link to this heading">#</a></h2>
+<p>ArrowLint recognizes local <code class="docutils literal notranslate"><span class="pre">*.lance</span></code> dataset directories as one lint target,
+including when they are discovered below a parent directory. It supports both
+Lance manifest naming schemes, selects the latest attached version, validates
+the <code class="docutils literal notranslate"><span class="pre">LANC</span></code> footer envelope, and decodes the stable protobuf fields needed by
+<code class="docutils literal notranslate"><span class="pre">AL201</span></code> through <code class="docutils literal notranslate"><span class="pre">AL207</span></code>.</p>
+<p>Reference: <a class="reference external" href="https://lance.org/format/table/">Lance table format</a></p>
+<section id="al201-invalid-lance-manifest">
+<h3><code class="docutils literal notranslate"><span class="pre">AL201</span></code> — Invalid Lance Manifest<a class="headerlink" href="#al201-invalid-lance-manifest" title="Link to this heading">#</a></h3>
+<p>Reports missing <code class="docutils literal notranslate"><span class="pre">_versions</span></code> metadata, missing attached manifests, malformed
+manifest filenames, mixed V1 and V2 naming schemes, corrupt footer envelopes,
+protobuf decoding failures, zero versions, and disagreement between the
+manifest filename and payload version.</p>
+<p>Reference: <a class="reference external" href="https://lance.org/format/table/layout/">Lance storage layout</a></p>
+</section>
+<section id="al202-invalid-lance-fragment-identifiers">
+<h3><code class="docutils literal notranslate"><span class="pre">AL202</span></code> — Invalid Lance Fragment Identifiers<a class="headerlink" href="#al202-invalid-lance-fragment-identifiers" title="Link to this heading">#</a></h3>
+<p>Reports duplicate fragment IDs and a <code class="docutils literal notranslate"><span class="pre">max_fragment_id</span></code> high-water mark below an
+ID used by the current manifest. Fragment IDs are stable dataset-wide
+identifiers and cannot be ambiguous or move backward.</p>
+</section>
+<section id="al203-invalid-lance-data-files">
+<h3><code class="docutils literal notranslate"><span class="pre">AL203</span></code> — Invalid Lance Data Files<a class="headerlink" href="#al203-invalid-lance-data-files" title="Link to this heading">#</a></h3>
+<p>Validates that data-file paths are non-empty safe relative paths, the forbidden
+field ID <code class="docutils literal notranslate"><span class="pre">-1</span></code> is not persisted, active field IDs do not overlap across files in
+one fragment, and V2 field-to-column mappings have matching lengths and unique
+non-negative column indices. The tombstone field ID <code class="docutils literal notranslate"><span class="pre">-2</span></code> remains valid.</p>
+</section>
+<section id="al204-invalid-lance-deletion-files">
+<h3><code class="docutils literal notranslate"><span class="pre">AL204</span></code> — Invalid Lance Deletion Files<a class="headerlink" href="#al204-invalid-lance-deletion-files" title="Link to this heading">#</a></h3>
+<p>Reports unknown deletion-file types, deletion files based on a future dataset
+version, and deleted-row counts greater than the fragment’s physical row count.
+Both sparse Arrow deletion arrays and dense Roaring bitmaps are accepted.</p>
+</section>
+<section id="al205-incompatible-lance-features">
+<h3><code class="docutils literal notranslate"><span class="pre">AL205</span></code> — Incompatible Lance Features<a class="headerlink" href="#al205-incompatible-lance-features" title="Link to this heading">#</a></h3>
+<p>Reports unknown required reader or writer feature bits and feature flags that
+do not match deletion files, table config, or base paths in the manifest. It
+also warns about the deprecated V2-format flag, unstable data overlays, and
+data format <code class="docutils literal notranslate"><span class="pre">2.3</span></code>, which the current Lance specification marks unstable.</p>
+<p>References: <a class="reference external" href="https://lance.org/format/table/versioning/">Lance table feature flags</a>,
+<a class="reference external" href="https://lance.org/format/file/versioning/">Lance file versions</a></p>
+</section>
+<section id="al206-missing-lance-references">
+<h3><code class="docutils literal notranslate"><span class="pre">AL206</span></code> — Missing Lance References<a class="headerlink" href="#al206-missing-lance-references" title="Link to this heading">#</a></h3>
+<p>Checks local data, deletion, and transaction files referenced by the latest
+manifest. Known data-file sizes must match the local object size. Base-path IDs
+must be unique and every referenced ID must exist. Files using external base
+paths are not opened because remote access and credentials are outside the
+local scanner’s scope.</p>
+</section>
+<section id="al207-lance-maintenance-opportunities">
+<h3><code class="docutils literal notranslate"><span class="pre">AL207</span></code> — Lance Maintenance Opportunities<a class="headerlink" href="#al207-lance-maintenance-opportunities" title="Link to this heading">#</a></h3>
+<p>Reports informational diagnostics for retained-version history, collections of
+small fragments, and fragments whose deleted-row ratio exceeds configured
+thresholds:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lance_max_versions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">lance_target_fragment_rows</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
+<span class="w">  </span><span class="nt">lance_small_fragment_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">  </span><span class="nt">lance_deletion_compaction_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+</pre></div>
+</div>
+<p>Set any threshold to <code class="docutils literal notranslate"><span class="pre">0</span></code> to disable that measurement. The default fragment size
+and deletion ratio match Lance’s compaction defaults. Version cleanup is never
+prescribed automatically because it removes time-travel history; tagged
+versions and the required retention window must be reviewed first.</p>
+<p>References: <a class="reference external" href="https://lance.org/guide/read_and_write/">Lance table maintenance</a>,
+<a class="reference external" href="https://lance.org/guide/performance/">Lance performance guide</a></p>
+</section>
+</section>
+<section id="lance-scope">
+<h2>Lance Scope<a class="headerlink" href="#lance-scope" title="Link to this heading">#</a></h2>
+<p>The built-in Lance scanner validates the latest local table manifest and
+locally resolvable references. It does not decode schema fields, index sections,
+data pages, deletion-vector contents, branches, tags, remote base paths, or
+historical manifest payloads. A clean result establishes current manifest
+consistency for the inspected metadata; it does not prove every data value or
+index entry is correct.</p>
+</section>
+<section id="vortex-file-metadata">
+<h2>Vortex File Metadata<a class="headerlink" href="#vortex-file-metadata" title="Link to this heading">#</a></h2>
+<p>ArrowLint recognizes local <code class="docutils literal notranslate"><span class="pre">*.vortex</span></code> and <code class="docutils literal notranslate"><span class="pre">*.vx</span></code> files. The scanner performs
+bounded reads of the fixed file envelope, postscript, and footer. Footer
+inspection is limited to 64 MiB so an untrusted locator cannot exhaust local or
+CI memory. It implements the stable Vortex file metadata schema directly so
+this support does not raise ArrowLint’s Rust version requirement to that of the
+latest Vortex crates.</p>
+<p>Reference: <a class="reference external" href="https://docs.vortex.dev/specs/file-format">Vortex file format specification</a></p>
+<section id="al301-invalid-vortex-container">
+<h3><code class="docutils literal notranslate"><span class="pre">AL301</span></code> — Invalid Vortex Container<a class="headerlink" href="#al301-invalid-vortex-container" title="Link to this heading">#</a></h3>
+<p>Validates the leading and trailing <code class="docutils literal notranslate"><span class="pre">VTXF</span></code> magic bytes, file-format version,
+postscript length, and postscript FlatBuffer structure. It reports truncated
+files, unsupported versions, offsets that place the postscript before the file
+body, and malformed postscript metadata.</p>
+</section>
+<section id="al302-invalid-vortex-postscript-segments">
+<h3><code class="docutils literal notranslate"><span class="pre">AL302</span></code> — Invalid Vortex Postscript Segments<a class="headerlink" href="#al302-invalid-vortex-postscript-segments" title="Link to this heading">#</a></h3>
+<p>Requires the layout and footer segments and validates every dtype, layout,
+statistics, and footer locator that is present. Segment ranges must end before
+the postscript, offsets must not overlap the leading magic, and offsets must
+satisfy their declared power-of-two alignment.</p>
+</section>
+<section id="al303-invalid-vortex-user-metadata">
+<h3><code class="docutils literal notranslate"><span class="pre">AL303</span></code> — Invalid Vortex User Metadata<a class="headerlink" href="#al303-invalid-vortex-user-metadata" title="Link to this heading">#</a></h3>
+<p>Validates the postscript’s user-defined metadata. A file may contain at most 16
+entries. Every entry must have a segment and a unique, non-empty UTF-8 key no
+longer than 64 bytes. Metadata segment ranges and alignment are also checked.</p>
+</section>
+<section id="al304-invalid-vortex-footer-segments">
+<h3><code class="docutils literal notranslate"><span class="pre">AL304</span></code> — Invalid Vortex Footer Segments<a class="headerlink" href="#al304-invalid-vortex-footer-segments" title="Link to this heading">#</a></h3>
+<p>Validates the footer FlatBuffer and its required segment registry. Segment
+offsets must be ordered, ranges must remain inside the file, and offsets must
+satisfy their declared alignment. These checks protect lazy reads and the
+aligned buffers used by Vortex’s zero-copy design. Footers over the inspection
+limit receive an informational skip diagnostic rather than an error.</p>
+<p>Reference: <a class="reference external" href="https://docs.vortex.dev/developer-guide/internals/serialization">Vortex serialization internals</a></p>
+</section>
+<section id="al305-invalid-vortex-registries">
+<h3><code class="docutils literal notranslate"><span class="pre">AL305</span></code> — Invalid Vortex Registries<a class="headerlink" href="#al305-invalid-vortex-registries" title="Link to this heading">#</a></h3>
+<p>Validates the footer’s array and layout registries. Every entry must contain a
+non-empty identifier, and an identifier may not appear more than once in the
+same registry.</p>
+</section>
+<section id="al306-incompatible-vortex-compression">
+<h3><code class="docutils literal notranslate"><span class="pre">AL306</span></code> — Incompatible Vortex Compression<a class="headerlink" href="#al306-incompatible-vortex-compression" title="Link to this heading">#</a></h3>
+<p>Validates postscript and footer compression specifications. The compression
+registry may contain at most eight entries, and the current stable schemes are
+None, LZ4, ZLib, and ZStd. When the footer itself is compressed or encrypted,
+ArrowLint reports that deep footer checks were skipped rather than treating
+opaque bytes as malformed metadata.</p>
+</section>
+<section id="al307-missing-vortex-optimization-metadata">
+<h3><code class="docutils literal notranslate"><span class="pre">AL307</span></code> — Missing Vortex Optimization Metadata<a class="headerlink" href="#al307-missing-vortex-optimization-metadata" title="Link to this heading">#</a></h3>
+<p>Reports independent informational diagnostics when a file omits its top-level
+dtype or file-level statistics. An omitted dtype requires the reader to obtain
+it externally. File-level statistics enable whole-file pruning; their value is
+workload-dependent, so absence is informational rather than invalid.</p>
+<p>Reference: <a class="reference external" href="https://docs.vortex.dev/concepts/file-format">Vortex file-format concepts</a></p>
+</section>
+</section>
+<section id="vortex-scope">
+<h2>Vortex Scope<a class="headerlink" href="#vortex-scope" title="Link to this heading">#</a></h2>
+<p>The built-in Vortex scanner validates stable, local container metadata. It does
+not decode dtype, layout, statistics, array, or data segments; verify registry
+identifiers against a particular Vortex session; infer editions; or inspect
+custom encodings. Compressed or encrypted footers remain opaque. A clean result
+establishes structural consistency for the inspected metadata, not complete
+readability or optimal encoding and layout choices.</p>
+</section>
+<section id="parquet-rule-scope">
+<h2>Parquet Rule Scope<a class="headerlink" href="#parquet-rule-scope" title="Link to this heading">#</a></h2>
+<p>The Parquet validity checks are metadata-only. They do not decode data pages or
 compare stored statistics with every physical value. A clean result therefore
-means the inspected footer metadata is internally consistent; it does not
-prove that the complete file contents are uncorrupted.</p>
+means the inspected footer metadata is internally consistent; it does not prove
+that the complete file contents are uncorrupted.</p>
 </section>
 <section id="selecting-rules">
 <h2>Selecting Rules<a class="headerlink" href="#selecting-rules" title="Link to this heading">#</a></h2>

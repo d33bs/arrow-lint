@@ -413,21 +413,35 @@ and Arrow-adjacent formats.</p>
 <section id="built-in">
 <h2>Built In<a class="headerlink" href="#built-in" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Parquet: row groups, statistics, encodings, compression, logical types.</p></li>
-<li><p>Arrow IPC and Feather: schema metadata, nullability, timestamp portability.</p></li>
+<li><p>Parquet and GeoParquet: row groups, statistics, encodings, compression,
+logical types, geometry metadata, and spatial pruning metadata.</p></li>
+<li><p>Arrow IPC and Feather: file and stream framing, schema metadata, nullability,
+timestamp portability, and dictionary compatibility.</p></li>
+<li><p>Iceberg table metadata: format versions, required fields, schema and partition
+IDs, snapshot references, snapshot logs, and metadata history maintenance.</p></li>
+<li><p>Lance table metadata: manifest envelopes and versions, fragment and data-file
+invariants, feature flags, local references, deletion health, and maintenance.</p></li>
+<li><p>Vortex file metadata: container and postscript integrity, segment bounds and
+alignment, footer registries, compression compatibility, and optimization
+metadata.</p></li>
 </ul>
 </section>
 <section id="external-rule-packs">
 <h2>External Rule Packs<a class="headerlink" href="#external-rule-packs" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Iceberg: partition evolution, manifests, snapshots, delete files, schema IDs.</p></li>
-<li><p>Vortex: encoding selection, chunk sizing, statistics, zero-copy behavior.</p></li>
-<li><p>Lance: fragment sizing, indexes, vector columns, schema evolution.</p></li>
 <li><p>DuckDB: Arrow export compatibility, nested types, timestamp semantics,
 Parquet writer settings.</p></li>
 </ul>
 <p>Inputs from these format families are identified consistently so external rule
-packs can attach deeper scanners and checks without changing the report model.</p>
+packs can attach deeper scanners and checks without changing the report model.
+Iceberg manifest lists, manifests, delete files, and referenced data files remain
+future scanner layers; ArrowLint currently validates table metadata JSON only.
+For Lance, ArrowLint decodes the latest local table manifest and verifies
+locally resolvable references. It does not decode schema fields, index sections,
+data pages, deletion-vector contents, remote base paths, branches, or tags.
+For Vortex, ArrowLint reads the fixed envelope, postscript, and an uncompressed,
+unencrypted footer. It does not decode layout, dtype, statistics, array, or data
+segments.</p>
 </section>
 </section>
 

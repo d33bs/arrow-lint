@@ -39,10 +39,22 @@ Every scanner returns the same model:
 - size and row counts
 - Arrow schema fields and metadata
 - Parquet row groups and column chunk metadata where available
+- Arrow IPC container inspection retained internally during rule evaluation
+- parsed GeoParquet metadata retained internally during rule evaluation
+- parsed Iceberg table metadata retained internally during rule evaluation
+- parsed Lance table metadata retained internally during rule evaluation
+- parsed Vortex postscript and footer metadata retained internally during rule
+  evaluation
 
 This keeps rules format-aware without making every rule parse every format.
 ArrowDiff reuses the same model to compare field structure, metadata, Parquet
 statistics, row-group layout, compression, and estimated scan bytes.
+
+Arrow IPC framing, GeoParquet metadata, Iceberg metadata JSON, the latest Lance
+manifest, and Vortex container metadata are parsed once by their scanners and
+retained outside the serialized report model. This avoids reparsing for every
+rule and prevents complete format metadata from being duplicated into JSON and
+SARIF reports.
 
 ## Extension Point
 

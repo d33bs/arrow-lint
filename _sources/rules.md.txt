@@ -1,9 +1,10 @@
 # Rules
 
-ArrowLint ships with built-in rules for common Arrow and Parquet quality issues.
-Rules classified as errors identify internally inconsistent metadata. Warnings
-identify deprecated features or broadly applicable interoperability and
-performance concerns. Informational diagnostics identify review opportunities.
+ArrowLint ships with built-in rules for common Arrow IPC, Parquet, GeoParquet,
+Iceberg, Lance, and Vortex quality issues. Rules classified as errors identify
+internally inconsistent metadata. Warnings identify deprecated features or
+broadly applicable interoperability and performance concerns. Informational
+diagnostics identify review opportunities.
 
 | Rule    | Severity | Category         | Purpose                                                 |
 | ------- | -------- | ---------------- | ------------------------------------------------------- |
@@ -22,7 +23,127 @@ performance concerns. Informational diagnostics identify review opportunities.
 | `AL013` | error    | correctness      | flags inconsistent Parquet file and row-group counts    |
 | `AL014` | warning  | metadata         | flags statistics that omit explicit null counts         |
 | `AL015` | error    | correctness      | flags negative Parquet counts and byte sizes            |
+| `AL016` | error    | correctness      | flags invalid Arrow IPC stream structure                |
+| `AL017` | warning  | interoperability | flags legacy Arrow IPC stream framing                   |
+| `AL018` | error    | geoparquet       | flags invalid GeoParquet file metadata                  |
+| `AL019` | error    | geoparquet       | flags invalid GeoParquet geometry columns               |
+| `AL020` | error    | geoparquet       | flags invalid GeoParquet spatial metadata               |
+| `AL021` | info     | performance      | reports missing GeoParquet pruning metadata             |
 | `AL100` | info     | extension        | identifies inputs handled by external format packs      |
+| `AL101` | error    | iceberg          | flags missing or unsupported Iceberg format versions    |
+| `AL102` | error    | iceberg          | flags invalid required Iceberg table metadata           |
+| `AL103` | error    | iceberg          | flags broken current, default, and snapshot references  |
+| `AL104` | error    | iceberg          | flags duplicate schema, spec, sort, and snapshot IDs    |
+| `AL105` | error    | iceberg          | flags inconsistent snapshots and snapshot logs          |
+| `AL106` | error    | iceberg          | flags invalid schema and partition field IDs            |
+| `AL107` | info     | maintenance      | flags large snapshot and metadata histories             |
+| `AL201` | error    | lance            | flags invalid or inconsistent Lance manifests           |
+| `AL202` | error    | lance            | flags invalid Lance fragment identifiers                |
+| `AL203` | error    | lance            | flags invalid Lance data-file field mappings            |
+| `AL204` | error    | lance            | flags invalid Lance deletion metadata                   |
+| `AL205` | error    | interoperability | flags unsupported or inconsistent Lance features        |
+| `AL206` | error    | lance            | flags missing or inconsistent local Lance references    |
+| `AL207` | info     | maintenance      | flags Lance compaction and retention opportunities      |
+| `AL301` | error    | vortex           | flags invalid Vortex envelopes and postscripts          |
+| `AL302` | error    | vortex           | flags invalid Vortex postscript segment locators        |
+| `AL303` | error    | vortex           | flags invalid Vortex user metadata                      |
+| `AL304` | error    | vortex           | flags invalid Vortex footer segment registries          |
+| `AL305` | error    | vortex           | flags invalid Vortex array and layout registries        |
+| `AL306` | error    | interoperability | flags incompatible Vortex compression metadata          |
+| `AL307` | info     | performance      | reports missing Vortex optimization metadata            |
+
+## Arrow IPC Streams
+
+ArrowLint recognizes stored Arrow IPC streams with the recommended `*.arrows`
+extension, as well as streams stored with the historical `*.arrow` or generic
+`*.ipc` extensions. The scanner distinguishes IPC files from streams and reads
+record batches through the same Arrow implementation after inspecting stream
+framing.
+
+Reference: [Arrow IPC format](https://arrow.apache.org/docs/format/Columnar.html#serialization-and-interprocess-communication-ipc)
+
+### `AL016` — Invalid Arrow IPC Stream
+
+Validates continuation and metadata-length prefixes, bounded FlatBuffer
+metadata, message and body alignment, schema placement, allowed message types,
+body ranges, and EOS placement. The schema must be the first and only schema
+message. Arrow's record-batch reader then validates the schema, dictionaries,
+buffers, and arrays; decoding failures are reported by this rule instead of
+aborting the complete lint run.
+
+The explicit EOS marker is optional for streams, so reaching the physical end
+of a stored stream after a complete message is valid. Bytes following an
+explicit EOS marker are invalid.
+
+### `AL017` — Legacy Arrow IPC Stream Framing
+
+Reports streams whose messages omit the continuation marker introduced in Arrow
+0.15. Legacy length-only framing remains readable, so this is an
+interoperability warning rather than an error. Rewriting adds deterministic
+8-byte framing alignment expected by current producers and consumers.
+
+## Arrow IPC Stream Scope
+
+The scanner validates local stored streams; it does not connect to live stream
+interfaces, Arrow Flight endpoints, or the Arrow C Stream interface. It limits
+individual message metadata inspection to 64 MiB. Record-batch bodies are
+decoded by Arrow's safe reader and are not retained in the report model.
+
+## GeoParquet Metadata
+
+ArrowLint activates GeoParquet rules when a Parquet file contains a `geo`
+file-metadata key. It supports GeoParquet major version 1, validates all fields
+it relies on, and ignores unknown fields so future compatible minor versions do
+not fail solely because they add metadata.
+
+Reference: [GeoParquet 1.1 specification](https://geoparquet.org/releases/v1.1.0/)
+
+### `AL018` — Invalid GeoParquet Metadata
+
+Requires exactly one `geo` key containing a JSON object with:
+
+- A semantic version in the supported major version.
+- A non-empty `primary_column`.
+- A non-empty `columns` object.
+
+Malformed JSON, duplicate `geo` entries, malformed versions, and unsupported
+major versions are errors.
+
+### `AL019` — Invalid GeoParquet Columns
+
+Checks that the primary geometry appears in `geo.columns`, every declared
+geometry column exists at the root of the Parquet schema, and each column has a
+supported encoding and unique valid geometry types. GeoParquet 1.0 accepts WKB;
+GeoParquet 1.1 and later 1.x metadata may also use the native GeoArrow-derived
+single-geometry encodings. WKB columns must use the Parquet `BYTE_ARRAY`
+physical type.
+
+### `AL020` — Invalid GeoParquet Spatial Metadata
+
+Validates the structural requirements used to interpret optional spatial
+metadata:
+
+- `crs` is an object or explicit null, and `epoch` is numeric.
+- `orientation` is `counterclockwise`.
+- `edges` is `planar` or `spherical`.
+- File bounds contain ordered minima and maxima for two or three dimensions.
+- Bounding-box coverings provide all four canonical paths, use one root
+  column, and reference a root field present in the Parquet schema.
+
+### `AL021` — Missing GeoParquet Pruning Metadata
+
+Reports an informational diagnostic when a geometry column has neither a
+file-level `bbox` nor a per-row bounding-box `covering`. Both fields are
+optional, but they can reduce spatial scan work through file, row-group, and
+page pruning.
+
+## GeoParquet Scope
+
+GeoParquet checks inspect Parquet schema and footer metadata. They do not decode
+WKB values, prove that declared geometry types match every value, validate a CRS
+against the complete PROJJSON schema, verify native geometry child layouts, or
+compare bounds and coverings with coordinate values. A clean result establishes
+structural metadata consistency, not geometric validity.
 
 ## Parquet Validity and Compatibility
 
@@ -112,12 +233,253 @@ Negative values are structurally invalid and are reported as errors.
 
 Reference: [Parquet metadata structures](https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift)
 
-## Rule Scope
+## Iceberg Table Metadata
 
-The new validity checks are metadata-only. They do not decode data pages or
+ArrowLint recognizes standard `*.metadata.json`, `*.gz.metadata.json`, and
+`*.metadata.json.gz` files. The scanner parses table metadata once and applies
+`AL101` through `AL107`. These rules follow the adopted Iceberg format versions
+1 through 3. Version 4 remains under development and is not accepted until it is
+formally adopted and implemented.
+
+Reference: [Iceberg format versioning](https://iceberg.apache.org/spec/#format-versioning)
+
+### `AL101` — Unsupported Iceberg Format Version
+
+Reports a missing, non-integer, or unsupported `format-version`. Iceberg readers
+must reject versions newer than they support. ArrowLint accepts the adopted
+versions 1, 2, and 3.
+
+### `AL102` — Invalid Required Iceberg Metadata
+
+Validates version-specific required fields, including the table location,
+update time, column ID high-water mark, schemas, partition specs, sort orders,
+table UUID, sequence number, and v3 row-lineage high-water mark. Locations must
+be absolute, and counters and timestamps must be non-negative.
+
+Reference: [Iceberg table metadata fields](https://iceberg.apache.org/spec/#table-metadata-fields)
+
+### `AL103` — Invalid Iceberg References
+
+Checks that `current-schema-id`, `default-spec-id`,
+`default-sort-order-id`, `current-snapshot-id`, and named snapshot references
+point to entries retained in the same metadata file. When `refs` is present,
+the `main` branch must match the current snapshot.
+
+### `AL104` — Duplicate Iceberg Identifiers
+
+Reports duplicate schema IDs, partition spec IDs, sort-order IDs, and snapshot
+IDs. These identifiers are the stable links used by manifests, snapshots, and
+writers; ambiguity can make table state unreadable.
+
+### `AL105` — Invalid Iceberg Snapshots
+
+Validates required snapshot fields by format version, sequence-number bounds,
+manifest-list usage, summary operations, schema references, v3 row-lineage
+fields, and snapshot-log ordering. The latest snapshot-log entry must match the
+current snapshot, and log timestamps cannot be later than `last-updated-ms`.
+
+Reference: [Iceberg snapshots](https://iceberg.apache.org/spec/#snapshots)
+
+### `AL106` — Invalid Iceberg Field IDs
+
+Recursively checks struct, list, and map field IDs for uniqueness and positive
+values. It verifies that `last-column-id` and `last-partition-id` are not below
+assigned IDs and that partition and sort fields reference known schema fields.
+
+Reference: [Iceberg schema and partition evolution](https://iceberg.apache.org/spec/#partition-evolution)
+
+### `AL107` — Iceberg Metadata Maintenance
+
+Reports an informational diagnostic when retained snapshots or metadata-log
+entries exceed configured limits. Defaults are 100 entries for each history:
+
+```yaml
+rules:
+  iceberg_max_snapshots: 100
+  iceberg_max_metadata_log_entries: 100
+```
+
+Set a threshold to `0` to disable that measurement. Retention requirements vary,
+so this rule does not prescribe deletion; it prompts review of time-travel needs,
+snapshot expiration, `write.metadata.previous-versions-max`, and
+`write.metadata.delete-after-commit.enabled`.
+
+Reference: [Iceberg maintenance recommendations](https://iceberg.apache.org/docs/latest/maintenance/)
+
+## Iceberg Scope
+
+The built-in Iceberg scanner validates table metadata JSON. It does not yet open
+manifest lists or manifests, verify referenced files exist, detect duplicate
+data-file paths, inspect delete-file strategy, or measure manifest and data-file
+sizes. A clean metadata result therefore establishes internal table-metadata
+consistency, not complete table health.
+
+## Lance Table Metadata
+
+ArrowLint recognizes local `*.lance` dataset directories as one lint target,
+including when they are discovered below a parent directory. It supports both
+Lance manifest naming schemes, selects the latest attached version, validates
+the `LANC` footer envelope, and decodes the stable protobuf fields needed by
+`AL201` through `AL207`.
+
+Reference: [Lance table format](https://lance.org/format/table/)
+
+### `AL201` — Invalid Lance Manifest
+
+Reports missing `_versions` metadata, missing attached manifests, malformed
+manifest filenames, mixed V1 and V2 naming schemes, corrupt footer envelopes,
+protobuf decoding failures, zero versions, and disagreement between the
+manifest filename and payload version.
+
+Reference: [Lance storage layout](https://lance.org/format/table/layout/)
+
+### `AL202` — Invalid Lance Fragment Identifiers
+
+Reports duplicate fragment IDs and a `max_fragment_id` high-water mark below an
+ID used by the current manifest. Fragment IDs are stable dataset-wide
+identifiers and cannot be ambiguous or move backward.
+
+### `AL203` — Invalid Lance Data Files
+
+Validates that data-file paths are non-empty safe relative paths, the forbidden
+field ID `-1` is not persisted, active field IDs do not overlap across files in
+one fragment, and V2 field-to-column mappings have matching lengths and unique
+non-negative column indices. The tombstone field ID `-2` remains valid.
+
+### `AL204` — Invalid Lance Deletion Files
+
+Reports unknown deletion-file types, deletion files based on a future dataset
+version, and deleted-row counts greater than the fragment's physical row count.
+Both sparse Arrow deletion arrays and dense Roaring bitmaps are accepted.
+
+### `AL205` — Incompatible Lance Features
+
+Reports unknown required reader or writer feature bits and feature flags that
+do not match deletion files, table config, or base paths in the manifest. It
+also warns about the deprecated V2-format flag, unstable data overlays, and
+data format `2.3`, which the current Lance specification marks unstable.
+
+References: [Lance table feature flags](https://lance.org/format/table/versioning/),
+[Lance file versions](https://lance.org/format/file/versioning/)
+
+### `AL206` — Missing Lance References
+
+Checks local data, deletion, and transaction files referenced by the latest
+manifest. Known data-file sizes must match the local object size. Base-path IDs
+must be unique and every referenced ID must exist. Files using external base
+paths are not opened because remote access and credentials are outside the
+local scanner's scope.
+
+### `AL207` — Lance Maintenance Opportunities
+
+Reports informational diagnostics for retained-version history, collections of
+small fragments, and fragments whose deleted-row ratio exceeds configured
+thresholds:
+
+```yaml
+rules:
+  lance_max_versions: 100
+  lance_target_fragment_rows: 1048576
+  lance_small_fragment_count: 8
+  lance_deletion_compaction_threshold: 0.1
+```
+
+Set any threshold to `0` to disable that measurement. The default fragment size
+and deletion ratio match Lance's compaction defaults. Version cleanup is never
+prescribed automatically because it removes time-travel history; tagged
+versions and the required retention window must be reviewed first.
+
+References: [Lance table maintenance](https://lance.org/guide/read_and_write/),
+[Lance performance guide](https://lance.org/guide/performance/)
+
+## Lance Scope
+
+The built-in Lance scanner validates the latest local table manifest and
+locally resolvable references. It does not decode schema fields, index sections,
+data pages, deletion-vector contents, branches, tags, remote base paths, or
+historical manifest payloads. A clean result establishes current manifest
+consistency for the inspected metadata; it does not prove every data value or
+index entry is correct.
+
+## Vortex File Metadata
+
+ArrowLint recognizes local `*.vortex` and `*.vx` files. The scanner performs
+bounded reads of the fixed file envelope, postscript, and footer. Footer
+inspection is limited to 64 MiB so an untrusted locator cannot exhaust local or
+CI memory. It implements the stable Vortex file metadata schema directly so
+this support does not raise ArrowLint's Rust version requirement to that of the
+latest Vortex crates.
+
+Reference: [Vortex file format specification](https://docs.vortex.dev/specs/file-format)
+
+### `AL301` — Invalid Vortex Container
+
+Validates the leading and trailing `VTXF` magic bytes, file-format version,
+postscript length, and postscript FlatBuffer structure. It reports truncated
+files, unsupported versions, offsets that place the postscript before the file
+body, and malformed postscript metadata.
+
+### `AL302` — Invalid Vortex Postscript Segments
+
+Requires the layout and footer segments and validates every dtype, layout,
+statistics, and footer locator that is present. Segment ranges must end before
+the postscript, offsets must not overlap the leading magic, and offsets must
+satisfy their declared power-of-two alignment.
+
+### `AL303` — Invalid Vortex User Metadata
+
+Validates the postscript's user-defined metadata. A file may contain at most 16
+entries. Every entry must have a segment and a unique, non-empty UTF-8 key no
+longer than 64 bytes. Metadata segment ranges and alignment are also checked.
+
+### `AL304` — Invalid Vortex Footer Segments
+
+Validates the footer FlatBuffer and its required segment registry. Segment
+offsets must be ordered, ranges must remain inside the file, and offsets must
+satisfy their declared alignment. These checks protect lazy reads and the
+aligned buffers used by Vortex's zero-copy design. Footers over the inspection
+limit receive an informational skip diagnostic rather than an error.
+
+Reference: [Vortex serialization internals](https://docs.vortex.dev/developer-guide/internals/serialization)
+
+### `AL305` — Invalid Vortex Registries
+
+Validates the footer's array and layout registries. Every entry must contain a
+non-empty identifier, and an identifier may not appear more than once in the
+same registry.
+
+### `AL306` — Incompatible Vortex Compression
+
+Validates postscript and footer compression specifications. The compression
+registry may contain at most eight entries, and the current stable schemes are
+None, LZ4, ZLib, and ZStd. When the footer itself is compressed or encrypted,
+ArrowLint reports that deep footer checks were skipped rather than treating
+opaque bytes as malformed metadata.
+
+### `AL307` — Missing Vortex Optimization Metadata
+
+Reports independent informational diagnostics when a file omits its top-level
+dtype or file-level statistics. An omitted dtype requires the reader to obtain
+it externally. File-level statistics enable whole-file pruning; their value is
+workload-dependent, so absence is informational rather than invalid.
+
+Reference: [Vortex file-format concepts](https://docs.vortex.dev/concepts/file-format)
+
+## Vortex Scope
+
+The built-in Vortex scanner validates stable, local container metadata. It does
+not decode dtype, layout, statistics, array, or data segments; verify registry
+identifiers against a particular Vortex session; infer editions; or inspect
+custom encodings. Compressed or encrypted footers remain opaque. A clean result
+establishes structural consistency for the inspected metadata, not complete
+readability or optimal encoding and layout choices.
+
+## Parquet Rule Scope
+
+The Parquet validity checks are metadata-only. They do not decode data pages or
 compare stored statistics with every physical value. A clean result therefore
-means the inspected footer metadata is internally consistent; it does not
-prove that the complete file contents are uncorrupted.
+means the inspected footer metadata is internally consistent; it does not prove
+that the complete file contents are uncorrupted.
 
 ## Selecting Rules
 

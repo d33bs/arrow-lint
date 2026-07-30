@@ -446,10 +446,21 @@ comparison, plugin traits, declarative rule evaluation, and report rendering.</p
 <li><p>size and row counts</p></li>
 <li><p>Arrow schema fields and metadata</p></li>
 <li><p>Parquet row groups and column chunk metadata where available</p></li>
+<li><p>Arrow IPC container inspection retained internally during rule evaluation</p></li>
+<li><p>parsed GeoParquet metadata retained internally during rule evaluation</p></li>
+<li><p>parsed Iceberg table metadata retained internally during rule evaluation</p></li>
+<li><p>parsed Lance table metadata retained internally during rule evaluation</p></li>
+<li><p>parsed Vortex postscript and footer metadata retained internally during rule
+evaluation</p></li>
 </ul>
 <p>This keeps rules format-aware without making every rule parse every format.
 ArrowDiff reuses the same model to compare field structure, metadata, Parquet
 statistics, row-group layout, compression, and estimated scan bytes.</p>
+<p>Arrow IPC framing, GeoParquet metadata, Iceberg metadata JSON, the latest Lance
+manifest, and Vortex container metadata are parsed once by their scanners and
+retained outside the serialized report model. This avoids reparsing for every
+rule and prevents complete format metadata from being duplicated into JSON and
+SARIF reports.</p>
 </section>
 <section id="extension-point">
 <h2>Extension Point<a class="headerlink" href="#extension-point" title="Link to this heading">#</a></h2>

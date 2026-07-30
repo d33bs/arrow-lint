@@ -376,12 +376,16 @@ a rule system designed for the Arrow ecosystem.</p>
 <h2>Features<a class="headerlink" href="#features" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Rust core engine with a common dataset model.</p></li>
-<li><p>Scanners for Parquet, Arrow IPC, and Feather.</p></li>
+<li><p>Scanners for Parquet, Arrow IPC files and streams, Feather, and Vortex files.</p></li>
+<li><p>Iceberg table metadata JSON scanning, including gzip-compressed metadata.</p></li>
+<li><p>Lance table-manifest scanning for local <code class="docutils literal notranslate"><span class="pre">*.lance</span></code> dataset directories.</p></li>
+<li><p>Vortex postscript and footer metadata validation.</p></li>
 <li><p>Python API and Python-first CLI.</p></li>
 <li><p>Native Rust CLI for direct integration.</p></li>
 <li><p>ArrowDiff metadata and statistics comparison for dataset revisions.</p></li>
 <li><p>Built-in rules for schema consistency, metadata, row groups, statistics,
-compression, timestamp portability, dictionary encoding, and small files.</p></li>
+compression, timestamp portability, dictionary encoding, small files, and
+GeoParquet, Iceberg, Lance, and Vortex metadata integrity.</p></li>
 <li><p>JSON, SARIF, and human-readable reports.</p></li>
 <li><p>YAML declarative rules for simple metadata checks.</p></li>
 <li><p>Extension points for additional rule packs.</p></li>
@@ -392,12 +396,15 @@ compression, timestamp portability, dictionary encoding, and small files.</p></l
 <p>ArrowLint scans:</p>
 <ul class="simple">
 <li><p>Apache Parquet</p></li>
-<li><p>Apache Arrow IPC files</p></li>
+<li><p>Apache Arrow IPC files and stored streams (<code class="docutils literal notranslate"><span class="pre">*.arrow</span></code>, <code class="docutils literal notranslate"><span class="pre">*.arrows</span></code>, and <code class="docutils literal notranslate"><span class="pre">*.ipc</span></code>)</p></li>
 <li><p>Feather files</p></li>
+<li><p>Apache Iceberg table metadata files (<code class="docutils literal notranslate"><span class="pre">*.metadata.json</span></code> and gzip variants)</p></li>
+<li><p>Lance dataset directories (<code class="docutils literal notranslate"><span class="pre">*.lance</span></code>)</p></li>
+<li><p>Vortex files (<code class="docutils literal notranslate"><span class="pre">*.vortex</span></code> and <code class="docutils literal notranslate"><span class="pre">*.vx</span></code>)</p></li>
 </ul>
-<p>The project also defines extension boundaries for Iceberg, Vortex, Lance, and
-DuckDB-focused checks. These formats are represented in the format-pack registry
-so rule packs can share a consistent discovery and reporting model.</p>
+<p>The project also defines an extension boundary for DuckDB-focused checks.
+Iceberg table metadata, the latest local Lance manifest, and Vortex container
+metadata are checked by built-in rules.</p>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
@@ -478,6 +485,12 @@ cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </spa
 <span class="nt">rules</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">min_row_group_rows</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100000</span>
 <span class="w">  </span><span class="nt">small_file_bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">67108864</span>
+<span class="w">  </span><span class="nt">iceberg_max_snapshots</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">iceberg_max_metadata_log_entries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">lance_max_versions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">lance_target_fragment_rows</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1048576</span>
+<span class="w">  </span><span class="nt">lance_small_fragment_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">  </span><span class="nt">lance_deletion_compaction_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
 <span class="w">  </span><span class="nt">fail_on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">error</span>
 <span class="w">  </span><span class="nt">only</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="w">  </span><span class="nt">disabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
@@ -520,16 +533,19 @@ data teams get a comfortable interface without compromising the Rust fast path.<
 </section>
 <section id="extension-strategy">
 <h2>Extension Strategy<a class="headerlink" href="#extension-strategy" title="Link to this heading">#</a></h2>
-<p>The built-in engine focuses on common Arrow, Feather, and Parquet checks. The
-format pack registry defines stable boundaries for specialized rule packs:</p>
+<p>The built-in engine focuses on common Arrow, Feather, Parquet, Iceberg table
+metadata, Lance table metadata, and Vortex file metadata checks. The format
+pack registry defines stable boundaries for specialized rule packs:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-iceberg</span></code> for manifests, snapshots, partition evolution, and delete files.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-vortex</span></code> for array encodings, chunk sizing, and statistics.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-lance</span></code> for fragments, indexes, schema evolution, and vector metadata.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">arrowlint-duckdb</span></code> for Arrow export round-trips, nested types, timestamps, and writer settings.</p></li>
 </ul>
-<p>Rule packs can start in this repository and move to separate packages when their
-public APIs are stable.</p>
+<p>Future Iceberg work can extend the built-in metadata scanner into manifest-list,
+manifest, delete-file, and referenced data-file validation without changing the
+public report model. Future Lance work can decode schema and index sections and
+inspect data-file internals using the same model. Future Vortex work can decode
+layout, dtype, statistics, and array payloads while preserving the bounded
+metadata scan. Other rule packs can start in this repository and move to
+separate packages when their public APIs are stable.</p>
 </section>
 <section id="development">
 <h2>Development<a class="headerlink" href="#development" title="Link to this heading">#</a></h2>
@@ -556,6 +572,20 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rules.html">Rules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#arrow-ipc-streams">Arrow IPC Streams</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al016-invalid-arrow-ipc-stream"><code class="docutils literal notranslate"><span class="pre">AL016</span></code> — Invalid Arrow IPC Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al017-legacy-arrow-ipc-stream-framing"><code class="docutils literal notranslate"><span class="pre">AL017</span></code> — Legacy Arrow IPC Stream Framing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#arrow-ipc-stream-scope">Arrow IPC Stream Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#geoparquet-metadata">GeoParquet Metadata</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al018-invalid-geoparquet-metadata"><code class="docutils literal notranslate"><span class="pre">AL018</span></code> — Invalid GeoParquet Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al019-invalid-geoparquet-columns"><code class="docutils literal notranslate"><span class="pre">AL019</span></code> — Invalid GeoParquet Columns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al020-invalid-geoparquet-spatial-metadata"><code class="docutils literal notranslate"><span class="pre">AL020</span></code> — Invalid GeoParquet Spatial Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al021-missing-geoparquet-pruning-metadata"><code class="docutils literal notranslate"><span class="pre">AL021</span></code> — Missing GeoParquet Pruning Metadata</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#geoparquet-scope">GeoParquet Scope</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rules.html#parquet-validity-and-compatibility">Parquet Validity and Compatibility</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="rules.html#al009-deprecated-parquet-physical-types"><code class="docutils literal notranslate"><span class="pre">AL009</span></code> — Deprecated Parquet Physical Types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="rules.html#al010-deprecated-parquet-encodings"><code class="docutils literal notranslate"><span class="pre">AL010</span></code> — Deprecated Parquet Encodings</a></li>
@@ -566,7 +596,40 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 <li class="toctree-l3"><a class="reference internal" href="rules.html#al015-invalid-parquet-size-metadata"><code class="docutils literal notranslate"><span class="pre">AL015</span></code> — Invalid Parquet Size Metadata</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="rules.html#rule-scope">Rule Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#iceberg-table-metadata">Iceberg Table Metadata</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al101-unsupported-iceberg-format-version"><code class="docutils literal notranslate"><span class="pre">AL101</span></code> — Unsupported Iceberg Format Version</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al102-invalid-required-iceberg-metadata"><code class="docutils literal notranslate"><span class="pre">AL102</span></code> — Invalid Required Iceberg Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al103-invalid-iceberg-references"><code class="docutils literal notranslate"><span class="pre">AL103</span></code> — Invalid Iceberg References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al104-duplicate-iceberg-identifiers"><code class="docutils literal notranslate"><span class="pre">AL104</span></code> — Duplicate Iceberg Identifiers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al105-invalid-iceberg-snapshots"><code class="docutils literal notranslate"><span class="pre">AL105</span></code> — Invalid Iceberg Snapshots</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al106-invalid-iceberg-field-ids"><code class="docutils literal notranslate"><span class="pre">AL106</span></code> — Invalid Iceberg Field IDs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al107-iceberg-metadata-maintenance"><code class="docutils literal notranslate"><span class="pre">AL107</span></code> — Iceberg Metadata Maintenance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#iceberg-scope">Iceberg Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#lance-table-metadata">Lance Table Metadata</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al201-invalid-lance-manifest"><code class="docutils literal notranslate"><span class="pre">AL201</span></code> — Invalid Lance Manifest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al202-invalid-lance-fragment-identifiers"><code class="docutils literal notranslate"><span class="pre">AL202</span></code> — Invalid Lance Fragment Identifiers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al203-invalid-lance-data-files"><code class="docutils literal notranslate"><span class="pre">AL203</span></code> — Invalid Lance Data Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al204-invalid-lance-deletion-files"><code class="docutils literal notranslate"><span class="pre">AL204</span></code> — Invalid Lance Deletion Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al205-incompatible-lance-features"><code class="docutils literal notranslate"><span class="pre">AL205</span></code> — Incompatible Lance Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al206-missing-lance-references"><code class="docutils literal notranslate"><span class="pre">AL206</span></code> — Missing Lance References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al207-lance-maintenance-opportunities"><code class="docutils literal notranslate"><span class="pre">AL207</span></code> — Lance Maintenance Opportunities</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#lance-scope">Lance Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#vortex-file-metadata">Vortex File Metadata</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al301-invalid-vortex-container"><code class="docutils literal notranslate"><span class="pre">AL301</span></code> — Invalid Vortex Container</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al302-invalid-vortex-postscript-segments"><code class="docutils literal notranslate"><span class="pre">AL302</span></code> — Invalid Vortex Postscript Segments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al303-invalid-vortex-user-metadata"><code class="docutils literal notranslate"><span class="pre">AL303</span></code> — Invalid Vortex User Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al304-invalid-vortex-footer-segments"><code class="docutils literal notranslate"><span class="pre">AL304</span></code> — Invalid Vortex Footer Segments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al305-invalid-vortex-registries"><code class="docutils literal notranslate"><span class="pre">AL305</span></code> — Invalid Vortex Registries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al306-incompatible-vortex-compression"><code class="docutils literal notranslate"><span class="pre">AL306</span></code> — Incompatible Vortex Compression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rules.html#al307-missing-vortex-optimization-metadata"><code class="docutils literal notranslate"><span class="pre">AL307</span></code> — Missing Vortex Optimization Metadata</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#vortex-scope">Vortex Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rules.html#parquet-rule-scope">Parquet Rule Scope</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rules.html#selecting-rules">Selecting Rules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rules.html#declarative-rules">Declarative Rules</a></li>
 </ul>
