@@ -127,6 +127,14 @@ fn scan_parquet(path: &Path) -> Result<DatasetFile> {
     let file_metadata = metadata.file_metadata();
     let arrow_schema = read_parquet_arrow_schema(path)?;
     let schema = Some(schema_from_arrow(&arrow_schema));
+    let geo_values = file_metadata
+        .key_value_metadata()
+        .into_iter()
+        .flatten()
+        .filter(|entry| entry.key == "geo")
+        .map(|entry| entry.value.as_deref())
+        .collect::<Vec<_>>();
+    let geoparquet_metadata = crate::geoparquet::parse_metadata(&geo_values);
     let key_values = file_metadata
         .key_value_metadata()
         .map(|values| metadata_from_key_values(values))
@@ -180,6 +188,8 @@ fn scan_parquet(path: &Path) -> Result<DatasetFile> {
         iceberg_metadata: None,
         lance_metadata: None,
         vortex_metadata: None,
+        ipc_metadata: None,
+        geoparquet_metadata,
     })
 }
 
@@ -194,40 +204,86 @@ fn scan_ipc(path: &Path, format: Format) -> Result<DatasetFile> {
     let size_bytes = std::fs::metadata(path)?.len();
     let file = File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
 
-    let (schema, num_rows) = match reader::FileReader::try_new(file, None) {
+    let (schema, num_rows, ipc_metadata) = match reader::FileReader::try_new(file, None) {
         Ok(mut ipc_reader) => {
             let schema = schema_from_arrow(&ipc_reader.schema());
             let mut rows = 0_i64;
             for batch in &mut ipc_reader {
                 rows += batch?.num_rows() as i64;
             }
-            (schema, Some(rows))
+            (
+                Some(schema),
+                Some(rows),
+                crate::dataset::IpcMetadata {
+                    kind: crate::dataset::IpcKind::File,
+                    errors: Vec::new(),
+                    uses_legacy_framing: false,
+                    has_eos: true,
+                    message_count: ipc_reader.num_batches(),
+                },
+            )
         }
         Err(_) => {
-            let file =
-                File::open(path).with_context(|| format!("failed to reopen {}", path.display()))?;
-            let mut stream_reader = reader::StreamReader::try_new(file, None)
-                .with_context(|| format!("failed to read Arrow IPC stream {}", path.display()))?;
-            let schema = schema_from_arrow(&stream_reader.schema());
-            let mut rows = 0_i64;
-            for batch in &mut stream_reader {
-                rows += batch?.num_rows() as i64;
+            let mut metadata = crate::ipc::inspect_stream(path)?;
+            let mut schema = None;
+            let mut rows = None;
+            if metadata.errors.is_empty() {
+                let file = File::open(path)
+                    .with_context(|| format!("failed to reopen {}", path.display()))?;
+                match reader::StreamReader::try_new(file, None) {
+                    Ok(mut stream_reader) => {
+                        schema = Some(schema_from_arrow(&stream_reader.schema()));
+                        let mut decoded_rows = 0_i64;
+                        for batch in &mut stream_reader {
+                            match batch {
+                                Ok(batch) => decoded_rows += batch.num_rows() as i64,
+                                Err(error) => {
+                                    metadata
+                                        .errors
+                                        .push(format!("Arrow IPC stream data is invalid: {error}"));
+                                    break;
+                                }
+                            }
+                        }
+                        if metadata.errors.is_empty() {
+                            rows = Some(decoded_rows);
+                        }
+                    }
+                    Err(error) => metadata
+                        .errors
+                        .push(format!("Arrow IPC stream schema is invalid: {error}")),
+                }
             }
-            (schema, Some(rows))
+            (schema, rows, metadata)
         }
     };
+    let mut metadata = BTreeMap::new();
+    metadata.insert(
+        "arrow.ipc_kind".to_string(),
+        match ipc_metadata.kind {
+            crate::dataset::IpcKind::File => "file",
+            crate::dataset::IpcKind::Stream => "stream",
+        }
+        .to_string(),
+    );
+    metadata.insert(
+        "arrow.ipc_messages".to_string(),
+        ipc_metadata.message_count.to_string(),
+    );
 
     Ok(DatasetFile {
         path: path.display().to_string(),
         format,
         size_bytes,
         num_rows,
-        schema: Some(schema),
-        metadata: BTreeMap::new(),
+        schema,
+        metadata,
         row_groups: Vec::new(),
         iceberg_metadata: None,
         lance_metadata: None,
         vortex_metadata: None,
+        ipc_metadata: Some(ipc_metadata),
+        geoparquet_metadata: None,
     })
 }
 
@@ -261,6 +317,8 @@ fn scan_iceberg_metadata(path: &Path) -> Result<DatasetFile> {
         iceberg_metadata: Some(metadata),
         lance_metadata: None,
         vortex_metadata: None,
+        ipc_metadata: None,
+        geoparquet_metadata: None,
     })
 }
 
@@ -282,6 +340,8 @@ fn scan_planned_format(path: &Path, format: Format) -> Result<DatasetFile> {
         iceberg_metadata: None,
         lance_metadata: None,
         vortex_metadata: None,
+        ipc_metadata: None,
+        geoparquet_metadata: None,
     })
 }
 

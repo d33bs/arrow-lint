@@ -60,6 +60,8 @@ pub(crate) fn scan_file(path: &Path) -> Result<DatasetFile> {
         iceberg_metadata: None,
         lance_metadata: None,
         vortex_metadata: Some(metadata),
+        ipc_metadata: None,
+        geoparquet_metadata: None,
     })
 }
 

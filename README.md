@@ -9,7 +9,7 @@ a rule system designed for the Arrow ecosystem.
 ## Features
 
 - Rust core engine with a common dataset model.
-- Scanners for Parquet, Arrow IPC, Feather, and Vortex files.
+- Scanners for Parquet, Arrow IPC files and streams, Feather, and Vortex files.
 - Iceberg table metadata JSON scanning, including gzip-compressed metadata.
 - Lance table-manifest scanning for local `*.lance` dataset directories.
 - Vortex postscript and footer metadata validation.
@@ -18,7 +18,7 @@ a rule system designed for the Arrow ecosystem.
 - ArrowDiff metadata and statistics comparison for dataset revisions.
 - Built-in rules for schema consistency, metadata, row groups, statistics,
   compression, timestamp portability, dictionary encoding, small files, and
-  Iceberg, Lance, and Vortex metadata integrity.
+  GeoParquet, Iceberg, Lance, and Vortex metadata integrity.
 - JSON, SARIF, and human-readable reports.
 - YAML declarative rules for simple metadata checks.
 - Extension points for additional rule packs.
@@ -28,7 +28,7 @@ a rule system designed for the Arrow ecosystem.
 ArrowLint scans:
 
 - Apache Parquet
-- Apache Arrow IPC files
+- Apache Arrow IPC files and stored streams (`*.arrow`, `*.arrows`, and `*.ipc`)
 - Feather files
 - Apache Iceberg table metadata files (`*.metadata.json` and gzip variants)
 - Lance dataset directories (`*.lance`)

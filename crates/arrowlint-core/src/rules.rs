@@ -38,6 +38,8 @@ pub fn builtin_registry() -> RuleRegistry {
     crate::iceberg::register_rules(&mut registry);
     crate::lance::register_rules(&mut registry);
     crate::vortex::register_rules(&mut registry);
+    crate::ipc::register_rules(&mut registry);
+    crate::geoparquet::register_rules(&mut registry);
     registry.register(RecognizedExtensionFormat);
     registry
 }
@@ -1189,10 +1191,10 @@ mod tests {
 
         assert_eq!(ids.len(), metadata.len());
         for rule_id in [
-            "AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015", "AL101", "AL102",
-            "AL103", "AL104", "AL105", "AL106", "AL107", "AL201", "AL202", "AL203", "AL204",
-            "AL205", "AL206", "AL207", "AL301", "AL302", "AL303", "AL304", "AL305", "AL306",
-            "AL307",
+            "AL009", "AL010", "AL011", "AL012", "AL013", "AL014", "AL015", "AL016", "AL017",
+            "AL018", "AL019", "AL020", "AL021", "AL101", "AL102", "AL103", "AL104", "AL105",
+            "AL106", "AL107", "AL201", "AL202", "AL203", "AL204", "AL205", "AL206", "AL207",
+            "AL301", "AL302", "AL303", "AL304", "AL305", "AL306", "AL307",
         ] {
             assert!(ids.contains(rule_id), "{rule_id} should be registered");
         }
@@ -1222,6 +1224,8 @@ mod tests {
             iceberg_metadata: None,
             lance_metadata: None,
             vortex_metadata: None,
+            ipc_metadata: None,
+            geoparquet_metadata: None,
         }
     }
 
@@ -1239,6 +1243,8 @@ mod tests {
                 iceberg_metadata: None,
                 lance_metadata: None,
                 vortex_metadata: None,
+                ipc_metadata: None,
+                geoparquet_metadata: None,
             }],
         }
     }

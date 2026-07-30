@@ -6,8 +6,10 @@ and Arrow-adjacent formats.
 
 ## Built In
 
-- Parquet: row groups, statistics, encodings, compression, logical types.
-- Arrow IPC and Feather: schema metadata, nullability, timestamp portability.
+- Parquet and GeoParquet: row groups, statistics, encodings, compression,
+  logical types, geometry metadata, and spatial pruning metadata.
+- Arrow IPC and Feather: file and stream framing, schema metadata, nullability,
+  timestamp portability, and dictionary compatibility.
 - Iceberg table metadata: format versions, required fields, schema and partition
   IDs, snapshot references, snapshot logs, and metadata history maintenance.
 - Lance table metadata: manifest envelopes and versions, fragment and data-file

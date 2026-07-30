@@ -22,7 +22,8 @@ impl Format {
             Self::Parquet
         } else if lower.ends_with(".feather") {
             Self::Feather
-        } else if lower.ends_with(".arrow") || lower.ends_with(".ipc") {
+        } else if lower.ends_with(".arrow") || lower.ends_with(".arrows") || lower.ends_with(".ipc")
+        {
             Self::ArrowIpc
         } else if lower.ends_with(".metadata.json") || lower.ends_with(".metadata.json.gz") {
             Self::IcebergMetadata
@@ -76,6 +77,31 @@ pub struct DatasetFile {
     pub lance_metadata: Option<LanceMetadata>,
     #[serde(skip)]
     pub vortex_metadata: Option<VortexMetadata>,
+    #[serde(skip)]
+    pub ipc_metadata: Option<IpcMetadata>,
+    #[serde(skip)]
+    pub geoparquet_metadata: Option<GeoParquetMetadata>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IpcKind {
+    File,
+    Stream,
+}
+
+#[derive(Debug, Clone)]
+pub struct IpcMetadata {
+    pub kind: IpcKind,
+    pub errors: Vec<String>,
+    pub uses_legacy_framing: bool,
+    pub has_eos: bool,
+    pub message_count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct GeoParquetMetadata {
+    pub document: Option<serde_json::Value>,
+    pub error: Option<String>,
 }
 
 #[derive(Debug, Clone, Default)]

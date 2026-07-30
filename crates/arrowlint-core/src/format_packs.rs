@@ -20,6 +20,7 @@ pub fn known_format_packs() -> Vec<FormatPack> {
                 "compression",
                 "encoding consistency",
                 "portable logical types",
+                "GeoParquet spatial metadata",
             ],
         },
         FormatPack {
@@ -27,6 +28,7 @@ pub fn known_format_packs() -> Vec<FormatPack> {
             status: "built-in",
             rule_pack: "arrowlint-core",
             best_practice_focus: &[
+                "file and stream framing",
                 "schema metadata",
                 "field nullability",
                 "timestamp portability",

@@ -1,10 +1,10 @@
 # Rules
 
-ArrowLint ships with built-in rules for common Arrow, Parquet, Iceberg, Lance,
-and Vortex quality issues. Rules classified as errors identify internally
-inconsistent metadata. Warnings identify deprecated features or broadly
-applicable interoperability and performance concerns. Informational diagnostics
-identify review opportunities.
+ArrowLint ships with built-in rules for common Arrow IPC, Parquet, GeoParquet,
+Iceberg, Lance, and Vortex quality issues. Rules classified as errors identify
+internally inconsistent metadata. Warnings identify deprecated features or
+broadly applicable interoperability and performance concerns. Informational
+diagnostics identify review opportunities.
 
 | Rule    | Severity | Category         | Purpose                                                 |
 | ------- | -------- | ---------------- | ------------------------------------------------------- |
@@ -23,6 +23,12 @@ identify review opportunities.
 | `AL013` | error    | correctness      | flags inconsistent Parquet file and row-group counts    |
 | `AL014` | warning  | metadata         | flags statistics that omit explicit null counts         |
 | `AL015` | error    | correctness      | flags negative Parquet counts and byte sizes            |
+| `AL016` | error    | correctness      | flags invalid Arrow IPC stream structure                |
+| `AL017` | warning  | interoperability | flags legacy Arrow IPC stream framing                   |
+| `AL018` | error    | geoparquet       | flags invalid GeoParquet file metadata                  |
+| `AL019` | error    | geoparquet       | flags invalid GeoParquet geometry columns               |
+| `AL020` | error    | geoparquet       | flags invalid GeoParquet spatial metadata               |
+| `AL021` | info     | performance      | reports missing GeoParquet pruning metadata             |
 | `AL100` | info     | extension        | identifies inputs handled by external format packs      |
 | `AL101` | error    | iceberg          | flags missing or unsupported Iceberg format versions    |
 | `AL102` | error    | iceberg          | flags invalid required Iceberg table metadata           |
@@ -45,6 +51,99 @@ identify review opportunities.
 | `AL305` | error    | vortex           | flags invalid Vortex array and layout registries        |
 | `AL306` | error    | interoperability | flags incompatible Vortex compression metadata          |
 | `AL307` | info     | performance      | reports missing Vortex optimization metadata            |
+
+## Arrow IPC Streams
+
+ArrowLint recognizes stored Arrow IPC streams with the recommended `*.arrows`
+extension, as well as streams stored with the historical `*.arrow` or generic
+`*.ipc` extensions. The scanner distinguishes IPC files from streams and reads
+record batches through the same Arrow implementation after inspecting stream
+framing.
+
+Reference: [Arrow IPC format](https://arrow.apache.org/docs/format/Columnar.html#serialization-and-interprocess-communication-ipc)
+
+### `AL016` — Invalid Arrow IPC Stream
+
+Validates continuation and metadata-length prefixes, bounded FlatBuffer
+metadata, message and body alignment, schema placement, allowed message types,
+body ranges, and EOS placement. The schema must be the first and only schema
+message. Arrow's record-batch reader then validates the schema, dictionaries,
+buffers, and arrays; decoding failures are reported by this rule instead of
+aborting the complete lint run.
+
+The explicit EOS marker is optional for streams, so reaching the physical end
+of a stored stream after a complete message is valid. Bytes following an
+explicit EOS marker are invalid.
+
+### `AL017` — Legacy Arrow IPC Stream Framing
+
+Reports streams whose messages omit the continuation marker introduced in Arrow
+0.15. Legacy length-only framing remains readable, so this is an
+interoperability warning rather than an error. Rewriting adds deterministic
+8-byte framing alignment expected by current producers and consumers.
+
+## Arrow IPC Stream Scope
+
+The scanner validates local stored streams; it does not connect to live stream
+interfaces, Arrow Flight endpoints, or the Arrow C Stream interface. It limits
+individual message metadata inspection to 64 MiB. Record-batch bodies are
+decoded by Arrow's safe reader and are not retained in the report model.
+
+## GeoParquet Metadata
+
+ArrowLint activates GeoParquet rules when a Parquet file contains a `geo`
+file-metadata key. It supports GeoParquet major version 1, validates all fields
+it relies on, and ignores unknown fields so future compatible minor versions do
+not fail solely because they add metadata.
+
+Reference: [GeoParquet 1.1 specification](https://geoparquet.org/releases/v1.1.0/)
+
+### `AL018` — Invalid GeoParquet Metadata
+
+Requires exactly one `geo` key containing a JSON object with:
+
+- A semantic version in the supported major version.
+- A non-empty `primary_column`.
+- A non-empty `columns` object.
+
+Malformed JSON, duplicate `geo` entries, malformed versions, and unsupported
+major versions are errors.
+
+### `AL019` — Invalid GeoParquet Columns
+
+Checks that the primary geometry appears in `geo.columns`, every declared
+geometry column exists at the root of the Parquet schema, and each column has a
+supported encoding and unique valid geometry types. GeoParquet 1.0 accepts WKB;
+GeoParquet 1.1 and later 1.x metadata may also use the native GeoArrow-derived
+single-geometry encodings. WKB columns must use the Parquet `BYTE_ARRAY`
+physical type.
+
+### `AL020` — Invalid GeoParquet Spatial Metadata
+
+Validates the structural requirements used to interpret optional spatial
+metadata:
+
+- `crs` is an object or explicit null, and `epoch` is numeric.
+- `orientation` is `counterclockwise`.
+- `edges` is `planar` or `spherical`.
+- File bounds contain ordered minima and maxima for two or three dimensions.
+- Bounding-box coverings provide all four canonical paths, use one root
+  column, and reference a root field present in the Parquet schema.
+
+### `AL021` — Missing GeoParquet Pruning Metadata
+
+Reports an informational diagnostic when a geometry column has neither a
+file-level `bbox` nor a per-row bounding-box `covering`. Both fields are
+optional, but they can reduce spatial scan work through file, row-group, and
+page pruning.
+
+## GeoParquet Scope
+
+GeoParquet checks inspect Parquet schema and footer metadata. They do not decode
+WKB values, prove that declared geometry types match every value, validate a CRS
+against the complete PROJJSON schema, verify native geometry child layouts, or
+compare bounds and coverings with coordinate values. A clean result establishes
+structural metadata consistency, not geometric validity.
 
 ## Parquet Validity and Compatibility
 
