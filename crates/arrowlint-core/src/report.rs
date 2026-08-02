@@ -44,13 +44,13 @@ impl LintReport {
     fn render_text(&self) -> String {
         if self.diagnostics.is_empty() {
             return format!(
-                "ArrowLint checked {} file(s): no issues found\n",
+                "arrow-lint checked {} file(s): no issues found\n",
                 self.dataset.files.len()
             );
         }
 
         let mut lines = vec![format!(
-            "ArrowLint checked {} file(s): {} issue(s)",
+            "arrow-lint checked {} file(s): {} issue(s)",
             self.dataset.files.len(),
             self.diagnostics.len()
         )];
@@ -98,7 +98,7 @@ impl LintReport {
             "runs": [{
                 "tool": {
                     "driver": {
-                        "name": "ArrowLint",
+                        "name": "arrow-lint",
                         "informationUri": "https://github.com/CU-DBMI/arrow-lint"
                     }
                 },

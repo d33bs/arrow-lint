@@ -21,8 +21,8 @@ sys.path.insert(0, basedir)
 
 project = "arrow-lint"
 # is used here due to sphinx decision-making: https://github.com/sphinx-doc/sphinx/issues/8132
-copyright = "2026, ArrowLint contributors"  # noqa: A001
-author = "ArrowLint contributors"
+copyright = "2026, arrow-lint contributors"  # noqa: A001
+author = "arrow-lint contributors"
 
 # -- General configuration ---------------------------------------------------
 
@@ -83,3 +83,6 @@ autodoc_preserve_defaults = True
 
 # enable anchor creation
 myst_heading_anchors = 3
+
+nb_execution_mode = "force"
+nb_execution_timeout = 60

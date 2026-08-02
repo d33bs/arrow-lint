@@ -875,7 +875,7 @@ impl Rule for RecognizedExtensionFormat {
             category: "extension",
             default_severity: Severity::Info,
             summary:
-                "ArrowLint recognizes planned format families and routes them to future rule packs.",
+                "arrow-lint recognizes planned format families and routes them to future rule packs.",
         }
     }
 

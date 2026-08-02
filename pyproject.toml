@@ -7,7 +7,7 @@ name = "arrow-lint"
 description = "A fast, opinionated, extensible linter for Apache Arrow datasets and related formats."
 readme = "README.md"
 authors = [
-  { name = "ArrowLint contributors" },
+  { name = "arrow-lint contributors" },
 ]
 requires-python = ">=3.11"
 classifiers = [
@@ -25,13 +25,19 @@ scripts.arrowdiff = "arrow_lint.cli:trigger_diff"
 [dependency-groups]
 dev = [
   "coverage[toml]>=7.10.6",
+  "duckdb>=1.5",
   "maturin>=1.9,<2",
   "poethepoet>=0.34",
+  "polars>=1.43",
+  "pyarrow>=25",
   "pytest>=8.3.5",
   "pytest-cov>=6.2.1",
 ]
 docs = [
+  "duckdb>=1.5",
   "myst-nb>=1.2",
+  "polars>=1.43",
+  "pyarrow>=25",
   "pydata-sphinx-theme>=0.16.1",
   "sphinx>=8.2.3",
 ]

@@ -1,4 +1,4 @@
-"""Command line interface for ArrowLint."""
+"""Command line interface for arrow-lint."""
 
 from __future__ import annotations
 

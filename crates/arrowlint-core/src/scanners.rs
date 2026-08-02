@@ -43,7 +43,7 @@ pub fn scan_paths(paths: &[PathBuf], config: &ScanConfig) -> Result<Dataset> {
     }
 
     if files.is_empty() {
-        return Err(anyhow!("no supported ArrowLint inputs found"));
+        return Err(anyhow!("no supported arrow-lint inputs found"));
     }
 
     let schema = files.iter().find_map(|file| file.schema.clone());

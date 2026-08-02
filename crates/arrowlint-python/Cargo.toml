@@ -1,6 +1,6 @@
 [package]
 name = "arrowlint-python"
-description = "Python bindings for ArrowLint."
+description = "Python bindings for arrow-lint."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

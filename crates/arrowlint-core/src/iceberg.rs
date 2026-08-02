@@ -29,7 +29,7 @@ impl Rule for IcebergFormatVersion {
             name: "unsupported-iceberg-format-version",
             category: "iceberg",
             default_severity: Severity::Error,
-            summary: "Iceberg metadata must use an adopted format version supported by ArrowLint.",
+            summary: "Iceberg metadata must use an adopted format version supported by arrow-lint.",
         }
     }
 
@@ -45,7 +45,7 @@ impl Rule for IcebergFormatVersion {
                         format!("unsupported Iceberg format version {version}"),
                     )
                     .with_help(
-                        "use an adopted Iceberg format version from 1 through 3, or upgrade ArrowLint when a newer version is adopted",
+                        "use an adopted Iceberg format version from 1 through 3, or upgrade arrow-lint when a newer version is adopted",
                     ),
                 ),
                 None => Some(

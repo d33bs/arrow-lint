@@ -2,7 +2,7 @@
 
 Sharpen your Arrow datasets.
 
-ArrowLint is a fast, opinionated, extensible linter for Apache Arrow datasets
+arrow-lint is a fast, opinionated, extensible linter for Apache Arrow datasets
 and related formats. It provides quick local feedback, CI-friendly reports, and
 a rule system designed for the Arrow ecosystem.
 
@@ -25,7 +25,7 @@ a rule system designed for the Arrow ecosystem.
 
 ## Supported Inputs
 
-ArrowLint scans:
+arrow-lint scans:
 
 - Apache Parquet
 - Apache Arrow IPC files and stored streams (`*.arrow`, `*.arrows`, and `*.ipc`)
@@ -115,7 +115,7 @@ print(changes["statistics"]["estimated_scan_cost_change_percent"])
 
 ## Configuration
 
-ArrowLint reads YAML configuration:
+arrow-lint reads YAML configuration:
 
 ```yaml
 scan:

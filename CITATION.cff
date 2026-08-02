@@ -8,7 +8,7 @@ message: >-
   metadata from the CITATION.cff file.
 type: software
 authors:
-  - given-names: ArrowLint
+  - given-names: arrow-lint
     family-names: contributors
     orcid: "https://orcid.org/0000-0000-0000-0000"
 repository-code: "https://github.com/CU-DBMI/arrow-lint"

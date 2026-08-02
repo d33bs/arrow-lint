@@ -1,4 +1,4 @@
-"""Python API for ArrowLint."""
+"""Python API for arrow-lint."""
 
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def render(
 
 
 def rules() -> list[dict[str, Any]]:
-    """Return metadata for built-in ArrowLint rules."""
+    """Return metadata for built-in arrow-lint rules."""
 
     from arrow_lint import _native
 

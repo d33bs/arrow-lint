@@ -1,4 +1,4 @@
-"""ArrowLint: a fast linter for Arrow datasets and related formats."""
+"""arrow-lint: a fast linter for Arrow datasets and related formats."""
 
 from arrow_lint.api import diff, formats, lint, render, render_diff, rules
 

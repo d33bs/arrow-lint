@@ -1,6 +1,6 @@
 # Architecture
 
-ArrowLint has a Rust-first core with a Python-first user experience.
+arrow-lint has a Rust-first core with a Python-first user experience.
 
 ```text
 CLI / Python API
@@ -65,14 +65,14 @@ rules, and report metadata while using the same dataset and diagnostic model.
 
 ## Development Tooling Boundary
 
-ArrowLint applies lint policy to datasets. It does not replace source-code
+arrow-lint applies lint policy to datasets. It does not replace source-code
 formatters, language linters, or repository hook orchestration. This repository
 uses `prek` for those development checks and keeps dataset rule selection in
 the Rust engine, where the Python and native CLIs share identical semantics.
 
 Future interoperability work should use deterministic producer-consumer
 fixtures across Arrow implementations. Each producer should write a stable
-fixture, every compatible consumer should scan it, and ArrowLint should verify
+fixture, every compatible consumer should scan it, and arrow-lint should verify
 that diagnostics and normalized metadata remain consistent. Performance gates
 can similarly build on ArrowDiff's estimated scan-cost change rather than
 introducing a separate comparison model.

@@ -687,7 +687,7 @@ impl Rule for InvalidFooterSegments {
                 if let Some(reason) = &metadata.footer_skip_reason {
                     diagnostics.push(
                         vortex_diagnostic("AL304", Severity::Info, file, reason).with_help(
-                            "inspect this oversized footer with Vortex tooling; ArrowLint limits metadata reads to protect local and CI resources",
+                            "inspect this oversized footer with Vortex tooling; arrow-lint limits metadata reads to protect local and CI resources",
                         ),
                     );
                 }
