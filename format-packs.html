@@ -148,6 +148,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="rules.html">
     Rules
   </a>
@@ -268,6 +275,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="arrowdiff.html">
     ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
   </a>
 </li>
 
@@ -407,7 +421,7 @@
                   
   <section id="format-packs">
 <h1>Format Packs<a class="headerlink" href="#format-packs" title="Link to this heading">#</a></h1>
-<p>ArrowLint includes scanners and built-in rules for the common Arrow interchange
+<p>arrow-lint includes scanners and built-in rules for the common Arrow interchange
 formats. The project also defines rule-pack boundaries for adjacent Arrow-native
 and Arrow-adjacent formats.</p>
 <section id="built-in">
@@ -435,11 +449,11 @@ Parquet writer settings.</p></li>
 <p>Inputs from these format families are identified consistently so external rule
 packs can attach deeper scanners and checks without changing the report model.
 Iceberg manifest lists, manifests, delete files, and referenced data files remain
-future scanner layers; ArrowLint currently validates table metadata JSON only.
-For Lance, ArrowLint decodes the latest local table manifest and verifies
+future scanner layers; arrow-lint currently validates table metadata JSON only.
+For Lance, arrow-lint decodes the latest local table manifest and verifies
 locally resolvable references. It does not decode schema fields, index sections,
 data pages, deletion-vector contents, remote base paths, branches, or tags.
-For Vortex, ArrowLint reads the fixed envelope, postscript, and an uncompressed,
+For Vortex, arrow-lint reads the fixed envelope, postscript, and an uncompressed,
 unencrypted footer. It does not decode layout, dtype, statistics, array, or data
 segments.</p>
 </section>
@@ -503,7 +517,7 @@ segments.</p>
 
   <p class="copyright">
     
-      © Copyright 2026, ArrowLint contributors.
+      © Copyright 2026, arrow-lint contributors.
       <br/>
     
   </p>

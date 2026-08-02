@@ -148,6 +148,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="rules.html">
     Rules
   </a>
@@ -268,6 +275,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="arrowdiff.html">
     ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
   </a>
 </li>
 
@@ -407,7 +421,7 @@
                   
   <section id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">#</a></h1>
-<p>ArrowLint has a Rust-first core with a Python-first user experience.</p>
+<p>arrow-lint has a Rust-first core with a Python-first user experience.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>CLI / Python API
         |
         v
@@ -471,13 +485,13 @@ rules, and report metadata while using the same dataset and diagnostic model.</p
 </section>
 <section id="development-tooling-boundary">
 <h2>Development Tooling Boundary<a class="headerlink" href="#development-tooling-boundary" title="Link to this heading">#</a></h2>
-<p>ArrowLint applies lint policy to datasets. It does not replace source-code
+<p>arrow-lint applies lint policy to datasets. It does not replace source-code
 formatters, language linters, or repository hook orchestration. This repository
 uses <code class="docutils literal notranslate"><span class="pre">prek</span></code> for those development checks and keeps dataset rule selection in
 the Rust engine, where the Python and native CLIs share identical semantics.</p>
 <p>Future interoperability work should use deterministic producer-consumer
 fixtures across Arrow implementations. Each producer should write a stable
-fixture, every compatible consumer should scan it, and ArrowLint should verify
+fixture, every compatible consumer should scan it, and arrow-lint should verify
 that diagnostics and normalized metadata remain consistent. Performance gates
 can similarly build on ArrowDiff’s estimated scan-cost change rather than
 introducing a separate comparison model.</p>
@@ -542,7 +556,7 @@ introducing a separate comparison model.</p>
 
   <p class="copyright">
     
-      © Copyright 2026, ArrowLint contributors.
+      © Copyright 2026, arrow-lint contributors.
       <br/>
     
   </p>

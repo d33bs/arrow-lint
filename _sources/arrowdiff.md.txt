@@ -25,7 +25,7 @@ ArrowDiff scans both paths through the shared Rust dataset model and reports:
 - estimated scan bytes and percentage change
 
 Directories are compared recursively using the same discovery behavior as
-ArrowLint.
+arrow-lint.
 
 ## Output
 

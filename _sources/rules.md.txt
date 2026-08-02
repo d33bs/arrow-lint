@@ -1,6 +1,6 @@
 # Rules
 
-ArrowLint ships with built-in rules for common Arrow IPC, Parquet, GeoParquet,
+arrow-lint ships with built-in rules for common Arrow IPC, Parquet, GeoParquet,
 Iceberg, Lance, and Vortex quality issues. Rules classified as errors identify
 internally inconsistent metadata. Warnings identify deprecated features or
 broadly applicable interoperability and performance concerns. Informational
@@ -54,7 +54,7 @@ diagnostics identify review opportunities.
 
 ## Arrow IPC Streams
 
-ArrowLint recognizes stored Arrow IPC streams with the recommended `*.arrows`
+arrow-lint recognizes stored Arrow IPC streams with the recommended `*.arrows`
 extension, as well as streams stored with the historical `*.arrow` or generic
 `*.ipc` extensions. The scanner distinguishes IPC files from streams and reads
 record batches through the same Arrow implementation after inspecting stream
@@ -91,7 +91,7 @@ decoded by Arrow's safe reader and are not retained in the report model.
 
 ## GeoParquet Metadata
 
-ArrowLint activates GeoParquet rules when a Parquet file contains a `geo`
+arrow-lint activates GeoParquet rules when a Parquet file contains a `geo`
 file-metadata key. It supports GeoParquet major version 1, validates all fields
 it relies on, and ignores unknown fields so future compatible minor versions do
 not fail solely because they add metadata.
@@ -235,7 +235,7 @@ Reference: [Parquet metadata structures](https://github.com/apache/parquet-forma
 
 ## Iceberg Table Metadata
 
-ArrowLint recognizes standard `*.metadata.json`, `*.gz.metadata.json`, and
+arrow-lint recognizes standard `*.metadata.json`, `*.gz.metadata.json`, and
 `*.metadata.json.gz` files. The scanner parses table metadata once and applies
 `AL101` through `AL107`. These rules follow the adopted Iceberg format versions
 1 through 3. Version 4 remains under development and is not accepted until it is
@@ -246,7 +246,7 @@ Reference: [Iceberg format versioning](https://iceberg.apache.org/spec/#format-v
 ### `AL101` — Unsupported Iceberg Format Version
 
 Reports a missing, non-integer, or unsupported `format-version`. Iceberg readers
-must reject versions newer than they support. ArrowLint accepts the adopted
+must reject versions newer than they support. arrow-lint accepts the adopted
 versions 1, 2, and 3.
 
 ### `AL102` — Invalid Required Iceberg Metadata
@@ -316,7 +316,7 @@ consistency, not complete table health.
 
 ## Lance Table Metadata
 
-ArrowLint recognizes local `*.lance` dataset directories as one lint target,
+arrow-lint recognizes local `*.lance` dataset directories as one lint target,
 including when they are discovered below a parent directory. It supports both
 Lance manifest naming schemes, selects the latest attached version, validates
 the `LANC` footer envelope, and decodes the stable protobuf fields needed by
@@ -403,11 +403,11 @@ index entry is correct.
 
 ## Vortex File Metadata
 
-ArrowLint recognizes local `*.vortex` and `*.vx` files. The scanner performs
+arrow-lint recognizes local `*.vortex` and `*.vx` files. The scanner performs
 bounded reads of the fixed file envelope, postscript, and footer. Footer
 inspection is limited to 64 MiB so an untrusted locator cannot exhaust local or
 CI memory. It implements the stable Vortex file metadata schema directly so
-this support does not raise ArrowLint's Rust version requirement to that of the
+this support does not raise arrow-lint's Rust version requirement to that of the
 latest Vortex crates.
 
 Reference: [Vortex file format specification](https://docs.vortex.dev/specs/file-format)
@@ -453,7 +453,7 @@ same registry.
 Validates postscript and footer compression specifications. The compression
 registry may contain at most eight entries, and the current stable schemes are
 None, LZ4, ZLib, and ZStd. When the footer itself is compressed or encrypted,
-ArrowLint reports that deep footer checks were skipped rather than treating
+arrow-lint reports that deep footer checks were skipped rather than treating
 opaque bytes as malformed metadata.
 
 ### `AL307` — Missing Vortex Optimization Metadata

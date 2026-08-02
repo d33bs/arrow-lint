@@ -48,7 +48,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Format Packs" href="format-packs.html" />
-    <link rel="prev" title="ArrowDiff" href="arrowdiff.html" />
+    <link rel="prev" title="It’s Dangerous to Go Alone! Take arrow-lint." href="case-studies/parquet-writers.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -143,6 +143,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="arrowdiff.html">
     ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
   </a>
 </li>
 
@@ -268,6 +275,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="arrowdiff.html">
     ArrowDiff
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
   </a>
 </li>
 
@@ -407,7 +421,7 @@
                   
   <section id="rules">
 <h1>Rules<a class="headerlink" href="#rules" title="Link to this heading">#</a></h1>
-<p>ArrowLint ships with built-in rules for common Arrow IPC, Parquet, GeoParquet,
+<p>arrow-lint ships with built-in rules for common Arrow IPC, Parquet, GeoParquet,
 Iceberg, Lance, and Vortex quality issues. Rules classified as errors identify
 internally inconsistent metadata. Warnings identify deprecated features or
 broadly applicable interoperability and performance concerns. Informational
@@ -641,7 +655,7 @@ diagnostics identify review opportunities.</p>
 </div>
 <section id="arrow-ipc-streams">
 <h2>Arrow IPC Streams<a class="headerlink" href="#arrow-ipc-streams" title="Link to this heading">#</a></h2>
-<p>ArrowLint recognizes stored Arrow IPC streams with the recommended <code class="docutils literal notranslate"><span class="pre">*.arrows</span></code>
+<p>arrow-lint recognizes stored Arrow IPC streams with the recommended <code class="docutils literal notranslate"><span class="pre">*.arrows</span></code>
 extension, as well as streams stored with the historical <code class="docutils literal notranslate"><span class="pre">*.arrow</span></code> or generic
 <code class="docutils literal notranslate"><span class="pre">*.ipc</span></code> extensions. The scanner distinguishes IPC files from streams and reads
 record batches through the same Arrow implementation after inspecting stream
@@ -676,7 +690,7 @@ decoded by Arrow’s safe reader and are not retained in the report model.</p>
 </section>
 <section id="geoparquet-metadata">
 <h2>GeoParquet Metadata<a class="headerlink" href="#geoparquet-metadata" title="Link to this heading">#</a></h2>
-<p>ArrowLint activates GeoParquet rules when a Parquet file contains a <code class="docutils literal notranslate"><span class="pre">geo</span></code>
+<p>arrow-lint activates GeoParquet rules when a Parquet file contains a <code class="docutils literal notranslate"><span class="pre">geo</span></code>
 file-metadata key. It supports GeoParquet major version 1, validates all fields
 it relies on, and ignores unknown fields so future compatible minor versions do
 not fail solely because they add metadata.</p>
@@ -811,7 +825,7 @@ Negative values are structurally invalid and are reported as errors.</p>
 </section>
 <section id="iceberg-table-metadata">
 <h2>Iceberg Table Metadata<a class="headerlink" href="#iceberg-table-metadata" title="Link to this heading">#</a></h2>
-<p>ArrowLint recognizes standard <code class="docutils literal notranslate"><span class="pre">*.metadata.json</span></code>, <code class="docutils literal notranslate"><span class="pre">*.gz.metadata.json</span></code>, and
+<p>arrow-lint recognizes standard <code class="docutils literal notranslate"><span class="pre">*.metadata.json</span></code>, <code class="docutils literal notranslate"><span class="pre">*.gz.metadata.json</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">*.metadata.json.gz</span></code> files. The scanner parses table metadata once and applies
 <code class="docutils literal notranslate"><span class="pre">AL101</span></code> through <code class="docutils literal notranslate"><span class="pre">AL107</span></code>. These rules follow the adopted Iceberg format versions
 1 through 3. Version 4 remains under development and is not accepted until it is
@@ -820,7 +834,7 @@ formally adopted and implemented.</p>
 <section id="al101-unsupported-iceberg-format-version">
 <h3><code class="docutils literal notranslate"><span class="pre">AL101</span></code> — Unsupported Iceberg Format Version<a class="headerlink" href="#al101-unsupported-iceberg-format-version" title="Link to this heading">#</a></h3>
 <p>Reports a missing, non-integer, or unsupported <code class="docutils literal notranslate"><span class="pre">format-version</span></code>. Iceberg readers
-must reject versions newer than they support. ArrowLint accepts the adopted
+must reject versions newer than they support. arrow-lint accepts the adopted
 versions 1, 2, and 3.</p>
 </section>
 <section id="al102-invalid-required-iceberg-metadata">
@@ -885,7 +899,7 @@ consistency, not complete table health.</p>
 </section>
 <section id="lance-table-metadata">
 <h2>Lance Table Metadata<a class="headerlink" href="#lance-table-metadata" title="Link to this heading">#</a></h2>
-<p>ArrowLint recognizes local <code class="docutils literal notranslate"><span class="pre">*.lance</span></code> dataset directories as one lint target,
+<p>arrow-lint recognizes local <code class="docutils literal notranslate"><span class="pre">*.lance</span></code> dataset directories as one lint target,
 including when they are discovered below a parent directory. It supports both
 Lance manifest naming schemes, selects the latest attached version, validates
 the <code class="docutils literal notranslate"><span class="pre">LANC</span></code> footer envelope, and decodes the stable protobuf fields needed by
@@ -966,11 +980,11 @@ index entry is correct.</p>
 </section>
 <section id="vortex-file-metadata">
 <h2>Vortex File Metadata<a class="headerlink" href="#vortex-file-metadata" title="Link to this heading">#</a></h2>
-<p>ArrowLint recognizes local <code class="docutils literal notranslate"><span class="pre">*.vortex</span></code> and <code class="docutils literal notranslate"><span class="pre">*.vx</span></code> files. The scanner performs
+<p>arrow-lint recognizes local <code class="docutils literal notranslate"><span class="pre">*.vortex</span></code> and <code class="docutils literal notranslate"><span class="pre">*.vx</span></code> files. The scanner performs
 bounded reads of the fixed file envelope, postscript, and footer. Footer
 inspection is limited to 64 MiB so an untrusted locator cannot exhaust local or
 CI memory. It implements the stable Vortex file metadata schema directly so
-this support does not raise ArrowLint’s Rust version requirement to that of the
+this support does not raise arrow-lint’s Rust version requirement to that of the
 latest Vortex crates.</p>
 <p>Reference: <a class="reference external" href="https://docs.vortex.dev/specs/file-format">Vortex file format specification</a></p>
 <section id="al301-invalid-vortex-container">
@@ -1013,7 +1027,7 @@ same registry.</p>
 <p>Validates postscript and footer compression specifications. The compression
 registry may contain at most eight entries, and the current stable schemes are
 None, LZ4, ZLib, and ZStd. When the footer itself is compressed or encrypted,
-ArrowLint reports that deep footer checks were skipped rather than treating
+arrow-lint reports that deep footer checks were skipped rather than treating
 opaque bytes as malformed metadata.</p>
 </section>
 <section id="al307-missing-vortex-optimization-metadata">
@@ -1102,12 +1116,12 @@ implemented as Rust rules or dedicated rule packs.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="arrowdiff.html"
+       href="case-studies/parquet-writers.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">ArrowDiff</p>
+        <p class="prev-next-title">It’s Dangerous to Go Alone! Take <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code>.</p>
       </div>
     </a>
     <a class="right-next"
@@ -1149,7 +1163,7 @@ implemented as Rust rules or dedicated rule packs.</p>
 
   <p class="copyright">
     
-      © Copyright 2026, ArrowLint contributors.
+      © Copyright 2026, arrow-lint contributors.
       <br/>
     
   </p>

@@ -147,6 +147,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="rules.html">
     Rules
   </a>
@@ -274,6 +281,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="case-studies/parquet-writers.html">
+    It’s Dangerous to Go Alone! Take arrow-lint.
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="rules.html">
     Rules
   </a>
@@ -369,7 +383,7 @@
 <section id="arrow-lint">
 <h1>arrow-lint<a class="headerlink" href="#arrow-lint" title="Link to this heading">#</a></h1>
 <p>Sharpen your Arrow datasets.</p>
-<p>ArrowLint is a fast, opinionated, extensible linter for Apache Arrow datasets
+<p>arrow-lint is a fast, opinionated, extensible linter for Apache Arrow datasets
 and related formats. It provides quick local feedback, CI-friendly reports, and
 a rule system designed for the Arrow ecosystem.</p>
 <section id="features">
@@ -393,7 +407,7 @@ GeoParquet, Iceberg, Lance, and Vortex metadata integrity.</p></li>
 </section>
 <section id="supported-inputs">
 <h2>Supported Inputs<a class="headerlink" href="#supported-inputs" title="Link to this heading">#</a></h2>
-<p>ArrowLint scans:</p>
+<p>arrow-lint scans:</p>
 <ul class="simple">
 <li><p>Apache Parquet</p></li>
 <li><p>Apache Arrow IPC files and stored streams (<code class="docutils literal notranslate"><span class="pre">*.arrow</span></code>, <code class="docutils literal notranslate"><span class="pre">*.arrows</span></code>, and <code class="docutils literal notranslate"><span class="pre">*.ipc</span></code>)</p></li>
@@ -478,7 +492,7 @@ cargo<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </spa
 </section>
 <section id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">#</a></h2>
-<p>ArrowLint reads YAML configuration:</p>
+<p>arrow-lint reads YAML configuration:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">scan</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">recursive</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 
@@ -569,6 +583,15 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 <li class="toctree-l2"><a class="reference internal" href="arrowdiff.html#what-it-compares">What It Compares</a></li>
 <li class="toctree-l2"><a class="reference internal" href="arrowdiff.html#output">Output</a></li>
 <li class="toctree-l2"><a class="reference internal" href="arrowdiff.html#comparison-semantics">Comparison Semantics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="case-studies/parquet-writers.html">It’s Dangerous to Go Alone! Take <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code>.</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="case-studies/parquet-writers.html#build-one-table">Build one table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case-studies/parquet-writers.html#let-each-writer-choose-its-defaults">Let each writer choose its defaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case-studies/parquet-writers.html#ask-arrow-lint">Ask arrow-lint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case-studies/parquet-writers.html#compare-the-files-directly">Compare the files directly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case-studies/parquet-writers.html#normalize-the-obvious-variables">Normalize the obvious variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case-studies/parquet-writers.html#practical-takeaways">Practical takeaways</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rules.html">Rules</a><ul>
@@ -706,7 +729,7 @@ pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 
   <p class="copyright">
     
-      © Copyright 2026, ArrowLint contributors.
+      © Copyright 2026, arrow-lint contributors.
       <br/>
     
   </p>

@@ -14,6 +14,7 @@ maxdepth: 3
 ---
 architecture
 arrowdiff
+case-studies/parquet-writers
 rules
 format-packs
 python-api

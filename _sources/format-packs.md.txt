@@ -1,6 +1,6 @@
 # Format Packs
 
-ArrowLint includes scanners and built-in rules for the common Arrow interchange
+arrow-lint includes scanners and built-in rules for the common Arrow interchange
 formats. The project also defines rule-pack boundaries for adjacent Arrow-native
 and Arrow-adjacent formats.
 
@@ -26,10 +26,10 @@ and Arrow-adjacent formats.
 Inputs from these format families are identified consistently so external rule
 packs can attach deeper scanners and checks without changing the report model.
 Iceberg manifest lists, manifests, delete files, and referenced data files remain
-future scanner layers; ArrowLint currently validates table metadata JSON only.
-For Lance, ArrowLint decodes the latest local table manifest and verifies
+future scanner layers; arrow-lint currently validates table metadata JSON only.
+For Lance, arrow-lint decodes the latest local table manifest and verifies
 locally resolvable references. It does not decode schema fields, index sections,
 data pages, deletion-vector contents, remote base paths, branches, or tags.
-For Vortex, ArrowLint reads the fixed envelope, postscript, and an uncompressed,
+For Vortex, arrow-lint reads the fixed envelope, postscript, and an uncompressed,
 unencrypted footer. It does not decode layout, dtype, statistics, array, or data
 segments.
