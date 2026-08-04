@@ -1,4 +1,4 @@
-<img src="docs/src/images/arrow-lint-logo.png" alt="arrow-lint logo" width="96">
+<img src="docs/src/images/arrow-lint-logo.png" alt="arrow-lint logo" width="128">
 
 # arrow-lint
 
