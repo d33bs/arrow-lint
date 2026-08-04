@@ -1,3 +1,5 @@
+<img src="docs/src/images/arrow-lint-logo.png" alt="arrow-lint logo" width="96">
+
 # arrow-lint
 
 Sharpen your Arrow datasets.
