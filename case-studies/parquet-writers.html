@@ -428,16 +428,97 @@
 <p><em>A torch for illuminating the hidden choices in your Parquet files.</em></p>
 <a class="reference internal image-reference" href="../_images/parquet-writers-hero.png"><img alt="A pixel-art explorer uses a torch to inspect Parquet file metadata." class="align-center" src="../_images/parquet-writers-hero.png" style="width: 85%;" />
 </a>
-<p>PyArrow, DuckDB, and Polars can write the same Arrow data to Parquet, but their
-default files do not look the same. This experiment asks each library to write
-one table, runs arrow-lint, and follows the metadata to the reason for each
-result.</p>
-<p>The three paths exercise distinct implementations: PyArrow’s C++ writer,
-DuckDB’s writer, and Polars’ native Rust writer. This is a format comparison,
-not a query benchmark. File size and arrow-lint’s estimated scan bytes are useful
-clues, but they do not predict every workload.</p>
-<section id="build-one-table">
-<h2>Build one table<a class="headerlink" href="#build-one-table" title="Link to this heading">#</a></h2>
+<p>Parquet files can hold the same data while making very different physical
+choices. Row groups, compression, encodings, and Arrow schema details all shape
+how a file behaves later, but most of those choices are hidden unless you go
+looking for them.</p>
+<p>This case study writes one simple Arrow table with PyArrow, DuckDB, and Polars.
+All three files preserve the rows. They do not preserve the same metadata
+story. <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code> helps make that story visible.</p>
+<p>The first half of this post is the readable version: what changed, why it
+matters, and what to do about it. The second half is a reproducible notebook
+that creates the files, runs <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code>, and backs up each claim. The same
+scenario is also covered by <code class="docutils literal notranslate"><span class="pre">tests/test_parquet_writer_case_study.py</span></code>.</p>
+<section id="the-short-version">
+<h2>The short version<a class="headerlink" href="#the-short-version" title="Link to this heading">#</a></h2>
+<p>PyArrow, DuckDB, and Polars all wrote valid Parquet. The interesting part is
+that each writer made a different set of reasonable defaults.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Writer</p></th>
+<th class="head"><p>What changed</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code> result</p></th>
+<th class="head"><p>Plain-English read</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PyArrow</p></td>
+<td><p>One row group, Snappy compression, Arrow <code class="docutils literal notranslate"><span class="pre">string</span></code> schema</p></td>
+<td><p>Only informational metadata note</p></td>
+<td><p>The quiet baseline for this example.</p></td>
+</tr>
+<tr class="row-odd"><td><p>DuckDB</p></td>
+<td><p>Two full row groups plus a small tail row group</p></td>
+<td><p>Tiny row group, mixed dictionary strategy, legacy dictionary encoding</p></td>
+<td><p>Valid file, but the defaults left choices worth making explicit.</p></td>
+</tr>
+<tr class="row-even"><td><p>Polars</p></td>
+<td><p>Two balanced row groups, Zstandard compression, <code class="docutils literal notranslate"><span class="pre">large_string</span></code> on readback</p></td>
+<td><p>Only informational metadata note</p></td>
+<td><p>Clean by lint rules, but not schema-identical to the PyArrow file.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>None of these outcomes means a writer is “bad.” Defaults are general-purpose
+starting points. The point is to notice when a default becomes part of your data
+contract by accident.</p>
+</section>
+<section id="what-arrow-lint-found">
+<h2>What <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code> found<a class="headerlink" href="#what-arrow-lint-found" title="Link to this heading">#</a></h2>
+<p>DuckDB’s default file receives three actionable findings in this experiment:</p>
+<ol class="arabic simple">
+<li><p><strong>AL001</strong> reports the small final row group. DuckDB’s default row group size
+naturally leaves a 4,240-row remainder when the input has 250,000 rows.</p></li>
+<li><p><strong>AL010</strong> reports <code class="docutils literal notranslate"><span class="pre">PLAIN_DICTIONARY</span></code>, a legacy Parquet encoding identifier
+that the Parquet specification deprecates for new data pages.</p></li>
+<li><p><strong>AL006</strong> reports that the <code class="docutils literal notranslate"><span class="pre">score</span></code> column uses a mixed dictionary strategy:
+dictionary encoding in the full row groups, plain encoding in the small tail.</p></li>
+</ol>
+<p>PyArrow and Polars receive only <strong>AL004</strong>, an informational note that the file
+does not include Arrow custom key-value metadata. That can be useful context,
+but it is not an actionable warning.</p>
+</section>
+<section id="what-arrow-diff-added">
+<h2>What <code class="docutils literal notranslate"><span class="pre">arrow-diff</span></code> added<a class="headerlink" href="#what-arrow-diff-added" title="Link to this heading">#</a></h2>
+<p>The feature exposed by <code class="docutils literal notranslate"><span class="pre">arrow-lint</span> <span class="pre">diff</span></code> compares the files directly. That
+comparison found something ordinary file-size checks would miss: the Polars
+file preserves the values, but its native string representation reads back as
+Arrow <code class="docutils literal notranslate"><span class="pre">large_string</span></code> instead of <code class="docutils literal notranslate"><span class="pre">string</span></code>.</p>
+<p>For many workflows that distinction is harmless. For strict schema contracts,
+it can matter. Equal values do not always imply identical Arrow schemas.</p>
+</section>
+<section id="the-practical-lesson">
+<h2>The practical lesson<a class="headerlink" href="#the-practical-lesson" title="Link to this heading">#</a></h2>
+<p>This is the part worth carrying into production:</p>
+<ol class="arabic simple">
+<li><p>Treat writer defaults as choices, not universal best practices.</p></li>
+<li><p>Normalize compression and row-group size before comparing writer efficiency.</p></li>
+<li><p>Check schema diffs when offset width or another logical type is contractual.</p></li>
+<li><p>Inspect row-group boundaries when a file ends with a small remainder.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code> to explain metadata, then benchmark the real workload before
+drawing performance conclusions.</p></li>
+</ol>
+<p>For this specific table, tuning DuckDB to write one row group and Parquet V2
+removes the actionable findings. Normalizing Polars to Snappy and one row group
+does not “fix” a lint problem, because Polars was already clean; it just makes
+the comparison less dominated by compression and row-group count.</p>
+</section>
+<section id="reproduce-the-case-study">
+<h2>Reproduce the case study<a class="headerlink" href="#reproduce-the-case-study" title="Link to this heading">#</a></h2>
+<p>The rest of the page is the runnable notebook version. It builds the table,
+writes the files, inspects metadata, runs <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code>, and compares files with
+<code class="docutils literal notranslate"><span class="pre">arrow-lint</span> <span class="pre">diff</span></code>.</p>
 <p>The input has 250,000 rows and three simple columns. Repeating category and
 score values give each writer an opportunity to use dictionary encoding.</p>
 <div class="cell docutils container">
@@ -490,9 +571,6 @@ score values give each writer an opportunity to use dictionary encoding.</p>
 </div>
 </div>
 </div>
-</section>
-<section id="let-each-writer-choose-its-defaults">
-<h2>Let each writer choose its defaults<a class="headerlink" href="#let-each-writer-choose-its-defaults" title="Link to this heading">#</a></h2>
 <p>PyArrow writes the table directly. DuckDB reads the same in-memory Arrow table
 and exports it with <code class="docutils literal notranslate"><span class="pre">COPY</span></code>. Polars imports the table and uses its native writer;
 <code class="docutils literal notranslate"><span class="pre">use_pyarrow=False</span></code> is the Polars default. None of the commands specifies
@@ -587,8 +665,8 @@ observed result for this input and locked Polars version when
 difference is not a writer verdict: Zstandard and Snappy are different
 compression choices.</p>
 </section>
-<section id="ask-arrow-lint">
-<h2>Ask arrow-lint<a class="headerlink" href="#ask-arrow-lint" title="Link to this heading">#</a></h2>
+<section id="run-arrow-lint">
+<h2>Run <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code><a class="headerlink" href="#run-arrow-lint" title="Link to this heading">#</a></h2>
 <p>We keep informational findings in the display because they help distinguish a
 shared observation from a writer-specific warning.</p>
 <div class="cell docutils container">
@@ -628,26 +706,10 @@ message: [[&quot;schema has no key-value metadata&quot;,&quot;row group 2 has 42
 </div>
 </div>
 </div>
-<p>PyArrow and Polars receive only <strong>AL004</strong>, an informational note that the Arrow
-schema has no custom key-value metadata. DuckDB receives the same note plus
-three findings:</p>
-<ul class="simple">
-<li><p><strong>AL001</strong> reports the 4,240-row tail as a tiny row group. DuckDB’s default
-row-group size is 122,880 rows, so 250,000 rows naturally leave this small
-remainder.</p></li>
-<li><p><strong>AL010</strong> finds <code class="docutils literal notranslate"><span class="pre">PLAIN_DICTIONARY</span></code>. DuckDB’s default Parquet V1 output uses
-this legacy encoding identifier. The Parquet specification deprecates it for
-new files in favor of <code class="docutils literal notranslate"><span class="pre">RLE_DICTIONARY</span></code> for data pages.</p></li>
-<li><p><strong>AL006</strong> sees mixed dictionary strategy for <code class="docutils literal notranslate"><span class="pre">score</span></code>. The two full groups use
-dictionary encoding, but the small final group uses plain encoding.</p></li>
-</ul>
-<p>These are not corruption errors. arrow-lint is pointing out layout and
-interoperability choices that deserve an explicit decision.</p>
 </section>
 <section id="compare-the-files-directly">
 <h2>Compare the files directly<a class="headerlink" href="#compare-the-files-directly" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">arrowdiff</span></code> finds another difference that file size alone cannot show. The
-summary uses PyArrow as the baseline for both comparisons.</p>
+<p>The summary uses PyArrow as the baseline for both comparisons.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">comparison_summary</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
@@ -704,10 +766,8 @@ estimated scan change: [[&quot;-20.40%&quot;,&quot;-77.47%&quot;]]
 </div>
 </div>
 </div>
-<p>DuckDB preserves the Arrow schema. Polars preserves the values, but its native
-string representation returns to Arrow as <code class="docutils literal notranslate"><span class="pre">large_string</span></code>, which uses 64-bit
-offsets instead of <code class="docutils literal notranslate"><span class="pre">string</span></code>’s 32-bit offsets. ArrowDiff therefore reports
-<code class="docutils literal notranslate"><span class="pre">Utf8</span></code> to <code class="docutils literal notranslate"><span class="pre">LargeUtf8</span></code> for <code class="docutils literal notranslate"><span class="pre">category</span></code> rather than calling the schemas identical.</p>
+<p>The Polars schema distinction is visible when the file is read back through
+PyArrow:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">polars_round_trip</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">polars_path</span><span class="p">)</span>
@@ -733,8 +793,8 @@ offsets instead of <code class="docutils literal notranslate"><span class="pre">
 </div>
 </div>
 <p>That distinction can matter to strict schema contracts even though no category
-value changed. arrow-lint’s scan-cost estimate remains metadata-based, so read
-its percentage as a size signal, not as a claim about query runtime.</p>
+value changed. <code class="docutils literal notranslate"><span class="pre">arrow-lint</span> <span class="pre">diff</span></code> uses metadata for its scan-cost estimate, so
+read its percentage as a size signal, not as a claim about query runtime.</p>
 </section>
 <section id="normalize-the-obvious-variables">
 <h2>Normalize the obvious variables<a class="headerlink" href="#normalize-the-obvious-variables" title="Link to this heading">#</a></h2>
@@ -828,7 +888,7 @@ message: [[&quot;schema has no key-value metadata&quot;,&quot;schema has no key-
 <p>The tuned DuckDB file no longer triggers AL001, AL006, or AL010.
 <code class="docutils literal notranslate"><span class="pre">ROW_GROUP_SIZE</span></code> removes the tiny tail and the mixed strategy it caused;
 <code class="docutils literal notranslate"><span class="pre">PARQUET_VERSION</span> <span class="pre">'V2'</span></code> removes the legacy encoding identifier from this file.
-Polars was already clean under arrow-lint, so normalizing it is not a fix. It
+Polars was already clean under <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code>, so normalizing it is not a fix. It
 simply removes compression and row-group count as explanations for the
 remaining file and schema differences.</p>
 <div class="cell docutils container">
@@ -865,17 +925,8 @@ estimated scan change: [[&quot;-96.96%&quot;,&quot;-7.58%&quot;]]
 </div>
 </div>
 </section>
-<section id="practical-takeaways">
-<h2>Practical takeaways<a class="headerlink" href="#practical-takeaways" title="Link to this heading">#</a></h2>
-<ol class="arabic simple">
-<li><p>Treat writer defaults as choices, not universal best practices.</p></li>
-<li><p>Normalize compression and row-group size before comparing writer efficiency.</p></li>
-<li><p>Check ArrowDiff when offset width or another logical type is contractually
-important; equal values do not guarantee identical Arrow schemas.</p></li>
-<li><p>Inspect row-group boundaries when a file ends with a small remainder.</p></li>
-<li><p>Use arrow-lint findings to explain metadata, then benchmark the real workload
-before drawing performance conclusions.</p></li>
-</ol>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
 <p>The relevant upstream references are the
 <a class="reference external" href="https://duckdb.org/docs/stable/data/parquet/overview">DuckDB Parquet overview</a>,
 <a class="reference external" href="https://duckdb.org/docs/stable/data/parquet/tips">DuckDB Parquet performance guide</a>,
@@ -933,12 +984,15 @@ and <a class="reference external" href="https://arrow.apache.org/docs/python/gen
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#build-one-table">Build one table</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#let-each-writer-choose-its-defaults">Let each writer choose its defaults</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ask-arrow-lint">Ask arrow-lint</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-short-version">The short version</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-arrow-lint-found">What <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code> found</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-arrow-diff-added">What <code class="docutils literal notranslate"><span class="pre">arrow-diff</span></code> added</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-practical-lesson">The practical lesson</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reproduce-the-case-study">Reproduce the case study</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-arrow-lint">Run <code class="docutils literal notranslate"><span class="pre">arrow-lint</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-the-files-directly">Compare the files directly</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize-the-obvious-variables">Normalize the obvious variables</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#practical-takeaways">Practical takeaways</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
 </ul>
   </nav></div>
 
