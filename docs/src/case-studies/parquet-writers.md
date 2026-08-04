@@ -23,17 +23,81 @@ width: 85%
 ---
 ```
 
-PyArrow, DuckDB, and Polars can write the same Arrow data to Parquet, but their
-default files do not look the same. This experiment asks each library to write
-one table, runs arrow-lint, and follows the metadata to the reason for each
-result.
+Parquet files can hold the same data while making very different physical
+choices. Row groups, compression, encodings, and Arrow schema details all shape
+how a file behaves later, but most of those choices are hidden unless you go
+looking for them.
 
-The three paths exercise distinct implementations: PyArrow's C++ writer,
-DuckDB's writer, and Polars' native Rust writer. This is a format comparison,
-not a query benchmark. File size and arrow-lint's estimated scan bytes are useful
-clues, but they do not predict every workload.
+This case study writes one simple Arrow table with PyArrow, DuckDB, and Polars.
+All three files preserve the rows. They do not preserve the same metadata
+story. `arrow-lint` helps make that story visible.
 
-## Build one table
+The first half of this post is the readable version: what changed, why it
+matters, and what to do about it. The second half is a reproducible notebook
+that creates the files, runs `arrow-lint`, and backs up each claim. The same
+scenario is also covered by `tests/test_parquet_writer_case_study.py`.
+
+## The short version
+
+PyArrow, DuckDB, and Polars all wrote valid Parquet. The interesting part is
+that each writer made a different set of reasonable defaults.
+
+| Writer  | What changed                                                               | `arrow-lint` result                                                   | Plain-English read                                                 |
+| ------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| PyArrow | One row group, Snappy compression, Arrow `string` schema                   | Only informational metadata note                                      | The quiet baseline for this example.                               |
+| DuckDB  | Two full row groups plus a small tail row group                            | Tiny row group, mixed dictionary strategy, legacy dictionary encoding | Valid file, but the defaults left choices worth making explicit.   |
+| Polars  | Two balanced row groups, Zstandard compression, `large_string` on readback | Only informational metadata note                                      | Clean by lint rules, but not schema-identical to the PyArrow file. |
+
+None of these outcomes means a writer is "bad." Defaults are general-purpose
+starting points. The point is to notice when a default becomes part of your data
+contract by accident.
+
+## What `arrow-lint` found
+
+DuckDB's default file receives three actionable findings in this experiment:
+
+1. **AL001** reports the small final row group. DuckDB's default row group size
+   naturally leaves a 4,240-row remainder when the input has 250,000 rows.
+1. **AL010** reports `PLAIN_DICTIONARY`, a legacy Parquet encoding identifier
+   that the Parquet specification deprecates for new data pages.
+1. **AL006** reports that the `score` column uses a mixed dictionary strategy:
+   dictionary encoding in the full row groups, plain encoding in the small tail.
+
+PyArrow and Polars receive only **AL004**, an informational note that the file
+does not include Arrow custom key-value metadata. That can be useful context,
+but it is not an actionable warning.
+
+## What `arrow-diff` added
+
+The feature exposed by `arrow-lint diff` compares the files directly. That
+comparison found something ordinary file-size checks would miss: the Polars
+file preserves the values, but its native string representation reads back as
+Arrow `large_string` instead of `string`.
+
+For many workflows that distinction is harmless. For strict schema contracts,
+it can matter. Equal values do not always imply identical Arrow schemas.
+
+## The practical lesson
+
+This is the part worth carrying into production:
+
+1. Treat writer defaults as choices, not universal best practices.
+1. Normalize compression and row-group size before comparing writer efficiency.
+1. Check schema diffs when offset width or another logical type is contractual.
+1. Inspect row-group boundaries when a file ends with a small remainder.
+1. Use `arrow-lint` to explain metadata, then benchmark the real workload before
+   drawing performance conclusions.
+
+For this specific table, tuning DuckDB to write one row group and Parquet V2
+removes the actionable findings. Normalizing Polars to Snappy and one row group
+does not "fix" a lint problem, because Polars was already clean; it just makes
+the comparison less dominated by compression and row-group count.
+
+## Reproduce the case study
+
+The rest of the page is the runnable notebook version. It builds the table,
+writes the files, inspects metadata, runs `arrow-lint`, and compares files with
+`arrow-lint diff`.
 
 The input has 250,000 rows and three simple columns. Repeating category and
 score values give each writer an opportunity to use dictionary encoding.
@@ -75,8 +139,6 @@ table = pa.table(
     "polars": pl.__version__,
 }
 ```
-
-## Let each writer choose its defaults
 
 PyArrow writes the table directly. DuckDB reads the same in-memory Arrow table
 and exports it with `COPY`. Polars imports the table and uses its native writer;
@@ -147,7 +209,7 @@ The Polars default file is much smaller here, but most of that headline
 difference is not a writer verdict: Zstandard and Snappy are different
 compression choices.
 
-## Ask arrow-lint
+## Run `arrow-lint`
 
 We keep informational findings in the display because they help distinguish a
 shared observation from a writer-specific warning.
@@ -172,26 +234,9 @@ pa.Table.from_pylist(
 )
 ```
 
-PyArrow and Polars receive only **AL004**, an informational note that the Arrow
-schema has no custom key-value metadata. DuckDB receives the same note plus
-three findings:
-
-- **AL001** reports the 4,240-row tail as a tiny row group. DuckDB's default
-  row-group size is 122,880 rows, so 250,000 rows naturally leave this small
-  remainder.
-- **AL010** finds `PLAIN_DICTIONARY`. DuckDB's default Parquet V1 output uses
-  this legacy encoding identifier. The Parquet specification deprecates it for
-  new files in favor of `RLE_DICTIONARY` for data pages.
-- **AL006** sees mixed dictionary strategy for `score`. The two full groups use
-  dictionary encoding, but the small final group uses plain encoding.
-
-These are not corruption errors. arrow-lint is pointing out layout and
-interoperability choices that deserve an explicit decision.
-
 ## Compare the files directly
 
-`arrowdiff` finds another difference that file size alone cannot show. The
-summary uses PyArrow as the baseline for both comparisons.
+The summary uses PyArrow as the baseline for both comparisons.
 
 ```{code-cell} ipython3
 def comparison_summary(label: str, path: Path) -> dict[str, object]:
@@ -225,10 +270,8 @@ pa.Table.from_pylist(
 )
 ```
 
-DuckDB preserves the Arrow schema. Polars preserves the values, but its native
-string representation returns to Arrow as `large_string`, which uses 64-bit
-offsets instead of `string`'s 32-bit offsets. ArrowDiff therefore reports
-`Utf8` to `LargeUtf8` for `category` rather than calling the schemas identical.
+The Polars schema distinction is visible when the file is read back through
+PyArrow:
 
 ```{code-cell} ipython3
 polars_round_trip = pq.read_table(polars_path)
@@ -246,8 +289,8 @@ width_normalized = polars_round_trip.set_column(
 ```
 
 That distinction can matter to strict schema contracts even though no category
-value changed. arrow-lint's scan-cost estimate remains metadata-based, so read
-its percentage as a size signal, not as a claim about query runtime.
+value changed. `arrow-lint diff` uses metadata for its scan-cost estimate, so
+read its percentage as a size signal, not as a claim about query runtime.
 
 ## Normalize the obvious variables
 
@@ -302,7 +345,7 @@ pa.Table.from_pylist(
 The tuned DuckDB file no longer triggers AL001, AL006, or AL010.
 `ROW_GROUP_SIZE` removes the tiny tail and the mixed strategy it caused;
 `PARQUET_VERSION 'V2'` removes the legacy encoding identifier from this file.
-Polars was already clean under arrow-lint, so normalizing it is not a fix. It
+Polars was already clean under `arrow-lint`, so normalizing it is not a fix. It
 simply removes compression and row-group count as explanations for the
 remaining file and schema differences.
 
@@ -315,15 +358,7 @@ pa.Table.from_pylist(
 )
 ```
 
-## Practical takeaways
-
-1. Treat writer defaults as choices, not universal best practices.
-1. Normalize compression and row-group size before comparing writer efficiency.
-1. Check ArrowDiff when offset width or another logical type is contractually
-   important; equal values do not guarantee identical Arrow schemas.
-1. Inspect row-group boundaries when a file ends with a small remainder.
-1. Use arrow-lint findings to explain metadata, then benchmark the real workload
-   before drawing performance conclusions.
+## References
 
 The relevant upstream references are the
 [DuckDB Parquet overview](https://duckdb.org/docs/stable/data/parquet/overview),

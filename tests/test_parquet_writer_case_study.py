@@ -177,6 +177,14 @@ def _assert_case_study_document() -> None:
     assert hero_image.is_file()
     assert "../images/parquet-writers-hero.png" in article
     assert "width: 85%" in article
+    assert "## The short version" in article
+    assert "## Reproduce the case study" in article
+    assert article.index("## The short version") < article.index(
+        "```{code-cell} ipython3"
+    )
+    assert "arrow-lint diff" in article
+    assert "ArrowDiff" not in article
+    assert "arrowdiff" not in article
     for rule_id in ("AL001", "AL006", "AL010"):
         assert rule_id in article
 
