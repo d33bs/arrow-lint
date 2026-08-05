@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{Read, Seek, SeekFrom},
+    io::{Cursor, Read, Seek, SeekFrom},
     path::Path,
 };
 
@@ -22,6 +22,15 @@ pub(crate) fn inspect_stream(path: &Path) -> Result<IpcMetadata> {
     let mut file =
         File::open(path).with_context(|| format!("failed to inspect {}", path.display()))?;
     let file_size = file.metadata()?.len();
+    inspect_stream_reader(&mut file, file_size)
+}
+
+pub(crate) fn inspect_stream_bytes(bytes: &[u8]) -> Result<IpcMetadata> {
+    let mut cursor = Cursor::new(bytes);
+    inspect_stream_reader(&mut cursor, bytes.len() as u64)
+}
+
+fn inspect_stream_reader(mut file: &mut impl ReadSeek, file_size: u64) -> Result<IpcMetadata> {
     let mut metadata = IpcMetadata {
         kind: IpcKind::Stream,
         errors: Vec::new(),
@@ -196,19 +205,23 @@ pub(crate) fn inspect_stream(path: &Path) -> Result<IpcMetadata> {
     Ok(metadata)
 }
 
-fn read_array<const LENGTH: usize>(file: &mut File, offset: u64) -> Result<[u8; LENGTH]> {
+fn read_array<const LENGTH: usize>(file: &mut impl ReadSeek, offset: u64) -> Result<[u8; LENGTH]> {
     file.seek(SeekFrom::Start(offset))?;
     let mut bytes = [0_u8; LENGTH];
     file.read_exact(&mut bytes)?;
     Ok(bytes)
 }
 
-fn read_bytes(file: &mut File, offset: u64, length: usize) -> Result<Vec<u8>> {
+fn read_bytes(file: &mut impl ReadSeek, offset: u64, length: usize) -> Result<Vec<u8>> {
     file.seek(SeekFrom::Start(offset))?;
     let mut bytes = vec![0_u8; length];
     file.read_exact(&mut bytes)?;
     Ok(bytes)
 }
+
+trait ReadSeek: Read + Seek {}
+
+impl<T: Read + Seek> ReadSeek for T {}
 
 pub(crate) fn register_rules(registry: &mut RuleRegistry) {
     registry.register(InvalidIpcStream);

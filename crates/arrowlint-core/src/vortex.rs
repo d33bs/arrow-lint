@@ -1,7 +1,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::File,
-    io::{Read, Seek, SeekFrom},
+    io::{Cursor, Read, Seek, SeekFrom},
     path::Path,
 };
 
@@ -28,6 +28,15 @@ const MAX_FOOTER_INSPECTION_BYTES: usize = 64 * 1024 * 1024;
 
 pub(crate) fn scan_file(path: &Path) -> Result<DatasetFile> {
     let metadata = inspect_file(path)?;
+    file_from_metadata(path, metadata)
+}
+
+pub(crate) fn scan_bytes(path: &Path, bytes: &[u8]) -> Result<DatasetFile> {
+    let metadata = inspect_bytes(bytes)?;
+    file_from_metadata(path, metadata)
+}
+
+fn file_from_metadata(path: &Path, metadata: VortexMetadata) -> Result<DatasetFile> {
     let mut summary = BTreeMap::new();
     if let Some(version) = metadata.version {
         summary.insert("vortex.version".to_string(), version.to_string());
@@ -69,6 +78,15 @@ fn inspect_file(path: &Path) -> Result<VortexMetadata> {
     let mut file =
         File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
     let file_size = file.metadata()?.len();
+    inspect_reader(&mut file, file_size)
+}
+
+fn inspect_bytes(bytes: &[u8]) -> Result<VortexMetadata> {
+    let mut cursor = Cursor::new(bytes);
+    inspect_reader(&mut cursor, bytes.len() as u64)
+}
+
+fn inspect_reader(mut file: &mut impl ReadSeek, file_size: u64) -> Result<VortexMetadata> {
     let mut metadata = VortexMetadata {
         file_size,
         ..VortexMetadata::default()
@@ -162,12 +180,16 @@ fn inspect_file(path: &Path) -> Result<VortexMetadata> {
     Ok(metadata)
 }
 
-fn read_range(file: &mut File, offset: u64, length: usize) -> Result<Vec<u8>> {
+fn read_range(file: &mut impl ReadSeek, offset: u64, length: usize) -> Result<Vec<u8>> {
     file.seek(SeekFrom::Start(offset))?;
     let mut bytes = vec![0_u8; length];
     file.read_exact(&mut bytes)?;
     Ok(bytes)
 }
+
+trait ReadSeek: Read + Seek {}
+
+impl<T: Read + Seek> ReadSeek for T {}
 
 fn parse_postscript(bytes: &[u8]) -> Result<VortexPostscript> {
     let root = FlatTable::root(bytes)?;

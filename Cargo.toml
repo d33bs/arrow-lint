@@ -16,14 +16,28 @@ rust-version = "1.82"
 [workspace.dependencies]
 anyhow = "1.0"
 arrow = "59.1.0"
+bytes = "1"
 clap = { version = "4.6.4", features = ["derive"] }
 flate2 = "1"
 flatbuffers = "25.12.19"
+object_store = { version = "0.12.5", default-features = false, features = [
+  "aws",
+  "azure",
+  "gcp",
+  "http",
+  "tls-webpki-roots",
+] }
 parquet = "59.1.0"
 prost = "0.14"
 pyo3 = "0.29.0"
+reqwest = { version = "0.12", default-features = false, features = [
+  "blocking",
+  "rustls-tls",
+] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 thiserror = "2.0"
+tokio = { version = "1", features = [ "rt" ] }
+url = "2"
 walkdir = "2.5"

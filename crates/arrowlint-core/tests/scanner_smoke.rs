@@ -1,4 +1,11 @@
-use std::{fs::File, sync::Arc};
+use std::{
+    fs::{self, File},
+    io::{Read, Write},
+    net::TcpListener,
+    path::PathBuf,
+    sync::Arc,
+    thread::{self, JoinHandle},
+};
 
 use arrow::{
     array::Int64Array,
@@ -49,6 +56,30 @@ fn scans_parquet_and_flags_tiny_row_group() -> anyhow::Result<()> {
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.rule_id == "AL001"));
+    Ok(())
+}
+
+#[test]
+fn scans_remote_http_parquet() -> anyhow::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("remote.parquet");
+    let batch = record_batch()?;
+    let mut writer = ArrowWriter::try_new(File::create(&path)?, batch.schema(), None)?;
+    writer.write(&batch)?;
+    writer.close()?;
+    let (url, server) = serve_file_once(path)?;
+
+    let report = lint_paths(&[PathBuf::from(&url)], LintConfig::default());
+    if report.is_ok() {
+        server
+            .join()
+            .map_err(|_| anyhow::anyhow!("server thread panicked"))??;
+    }
+    let report = report?;
+
+    assert_eq!(report.dataset.files.len(), 1);
+    assert_eq!(report.dataset.files[0].path, url);
+    assert_eq!(report.dataset.files[0].num_rows, Some(3));
     Ok(())
 }
 
@@ -139,6 +170,26 @@ fn disabled_rules_override_only_selected_rules() -> anyhow::Result<()> {
 
     assert!(report.diagnostics.is_empty());
     Ok(())
+}
+
+fn serve_file_once(path: PathBuf) -> anyhow::Result<(String, JoinHandle<anyhow::Result<()>>)> {
+    let listener = TcpListener::bind("127.0.0.1:0")?;
+    let address = listener.local_addr()?;
+    let url = format!("http://{address}/remote.parquet?signature=example");
+    let handle = thread::spawn(move || -> anyhow::Result<()> {
+        let (mut stream, _) = listener.accept()?;
+        let mut request = [0_u8; 1024];
+        let _ = stream.read(&mut request)?;
+        let bytes = fs::read(path)?;
+        write!(
+            stream,
+            "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            bytes.len()
+        )?;
+        stream.write_all(&bytes)?;
+        Ok(())
+    });
+    Ok((url, handle))
 }
 
 fn record_batch() -> anyhow::Result<RecordBatch> {

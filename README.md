@@ -36,6 +36,31 @@ arrow-lint scans:
 - Lance dataset directories (`*.lance`)
 - Vortex files (`*.vortex` and `*.vx`)
 
+Single-file remote URLs are supported for Parquet, Arrow IPC, Feather, Iceberg
+metadata, and Vortex inputs:
+
+```bash
+uv run arrow-lint lint https://example.org/data/example.parquet
+uv run arrow-lint lint s3://bucket/path/example.parquet
+uv run arrow-lint lint gs://bucket/path/example.arrow
+uv run arrow-lint lint az://account/container/path/example.metadata.json
+```
+
+HTTP and HTTPS inputs can be public or presigned URLs. Native object-store URIs
+use provider configuration supported by the Rust `object_store` crate, including
+AWS S3 (`s3://` and `s3a://`), Google Cloud Storage (`gs://`), and Azure Blob
+Storage / ADLS (`az://`, `adl://`, `azure://`, `abfs://`, and `abfss://`).
+Authenticated object-store reads use standard provider environment variables
+such as `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`,
+`GOOGLE_SERVICE_ACCOUNT`, `GOOGLE_APPLICATION_CREDENTIALS`,
+`AZURE_STORAGE_ACCOUNT_NAME`, `AZURE_STORAGE_ACCOUNT_KEY`,
+`AZURE_STORAGE_SAS_TOKEN`, and Azure identity variables. For anonymous public
+objects, set `ARROW_LINT_OBJECT_STORE_ANONYMOUS=true`; provider-specific
+`*_SKIP_SIGNATURE=true` variables are also forwarded. Remote URLs are
+downloaded into memory before scanning. Local directory
+expansion still applies to local paths only; remote Lance datasets and remote
+directory walking are not supported yet.
+
 The project also defines an extension boundary for DuckDB-focused checks.
 Iceberg table metadata, the latest local Lance manifest, and Vortex container
 metadata are checked by built-in rules.

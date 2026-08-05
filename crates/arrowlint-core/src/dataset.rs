@@ -18,20 +18,21 @@ pub enum Format {
 impl Format {
     pub fn from_path(path: &std::path::Path) -> Self {
         let lower = path.to_string_lossy().to_ascii_lowercase();
-        if lower.ends_with(".parquet") {
+        let input = format_detection_input(&lower);
+        if input.ends_with(".parquet") {
             Self::Parquet
-        } else if lower.ends_with(".feather") {
+        } else if input.ends_with(".feather") {
             Self::Feather
-        } else if lower.ends_with(".arrow") || lower.ends_with(".arrows") || lower.ends_with(".ipc")
+        } else if input.ends_with(".arrow") || input.ends_with(".arrows") || input.ends_with(".ipc")
         {
             Self::ArrowIpc
-        } else if lower.ends_with(".metadata.json") || lower.ends_with(".metadata.json.gz") {
+        } else if input.ends_with(".metadata.json") || input.ends_with(".metadata.json.gz") {
             Self::IcebergMetadata
-        } else if lower.ends_with(".lance") || lower.contains(".lance/") {
+        } else if input.ends_with(".lance") || input.contains(".lance/") {
             Self::LanceDataset
-        } else if lower.ends_with(".vortex") || lower.ends_with(".vx") {
+        } else if input.ends_with(".vortex") || input.ends_with(".vx") {
             Self::Vortex
-        } else if lower.ends_with(".duckdb") || lower.ends_with(".db") {
+        } else if input.ends_with(".duckdb") || input.ends_with(".db") {
             Self::DuckDb
         } else {
             Self::Unknown
@@ -54,6 +55,49 @@ impl Format {
     pub fn is_supported_scanner(&self) -> bool {
         matches!(self, Self::ArrowIpc | Self::Feather | Self::Parquet)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use super::Format;
+
+    #[test]
+    fn detects_formats_from_cloud_object_uris() {
+        assert_eq!(
+            Format::from_path(Path::new("s3://bucket/path/example.parquet")),
+            Format::Parquet
+        );
+        assert_eq!(
+            Format::from_path(Path::new("gs://bucket/path/example.arrow#fragment")),
+            Format::ArrowIpc
+        );
+        assert_eq!(
+            Format::from_path(Path::new(
+                "abfss://container@account.dfs.core.windows.net/path/example.metadata.json?version=1"
+            )),
+            Format::IcebergMetadata
+        );
+        assert_eq!(
+            Format::from_path(Path::new("az://account/container/path/example.vortex")),
+            Format::Vortex
+        );
+    }
+}
+
+fn format_detection_input(input: &str) -> &str {
+    let without_query = input.split(['?', '#']).next().unwrap_or(input);
+    without_query
+        .strip_prefix("s3://")
+        .or_else(|| without_query.strip_prefix("s3a://"))
+        .or_else(|| without_query.strip_prefix("gs://"))
+        .or_else(|| without_query.strip_prefix("az://"))
+        .or_else(|| without_query.strip_prefix("adl://"))
+        .or_else(|| without_query.strip_prefix("azure://"))
+        .or_else(|| without_query.strip_prefix("abfs://"))
+        .or_else(|| without_query.strip_prefix("abfss://"))
+        .unwrap_or(without_query)
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
