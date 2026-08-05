@@ -25,6 +25,13 @@ and Arrow-adjacent formats.
 
 Inputs from these format families are identified consistently so external rule
 packs can attach deeper scanners and checks without changing the report model.
+Single-file remote URLs are supported for Parquet, Arrow IPC, Feather, Iceberg
+table metadata, and Vortex inputs, including HTTP(S), S3, GCS, and Azure object
+store URIs. Authenticated object-store reads use standard provider environment
+variables, and anonymous public object reads can use
+`ARROW_LINT_OBJECT_STORE_ANONYMOUS=true` or provider-specific
+`*_SKIP_SIGNATURE=true` variables. Remote URLs are downloaded into memory before
+scanning; directory expansion and Lance dataset discovery remain local-only.
 Iceberg manifest lists, manifests, delete files, and referenced data files remain
 future scanner layers; arrow-lint currently validates table metadata JSON only.
 For Lance, arrow-lint decodes the latest local table manifest and verifies

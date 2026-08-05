@@ -417,6 +417,28 @@ GeoParquet, Iceberg, Lance, and Vortex metadata integrity.</p></li>
 <li><p>Lance dataset directories (<code class="docutils literal notranslate"><span class="pre">*.lance</span></code>)</p></li>
 <li><p>Vortex files (<code class="docutils literal notranslate"><span class="pre">*.vortex</span></code> and <code class="docutils literal notranslate"><span class="pre">*.vx</span></code>)</p></li>
 </ul>
+<p>Single-file remote URLs are supported for Parquet, Arrow IPC, Feather, Iceberg
+metadata, and Vortex inputs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>https://example.org/data/example.parquet
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>s3://bucket/path/example.parquet
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>gs://bucket/path/example.arrow
+uv<span class="w"> </span>run<span class="w"> </span>arrow-lint<span class="w"> </span>lint<span class="w"> </span>az://account/container/path/example.metadata.json
+</pre></div>
+</div>
+<p>HTTP and HTTPS inputs can be public or presigned URLs. Native object-store URIs
+use provider configuration supported by the Rust <code class="docutils literal notranslate"><span class="pre">object_store</span></code> crate, including
+AWS S3 (<code class="docutils literal notranslate"><span class="pre">s3://</span></code> and <code class="docutils literal notranslate"><span class="pre">s3a://</span></code>), Google Cloud Storage (<code class="docutils literal notranslate"><span class="pre">gs://</span></code>), and Azure Blob
+Storage / ADLS (<code class="docutils literal notranslate"><span class="pre">az://</span></code>, <code class="docutils literal notranslate"><span class="pre">adl://</span></code>, <code class="docutils literal notranslate"><span class="pre">azure://</span></code>, <code class="docutils literal notranslate"><span class="pre">abfs://</span></code>, and <code class="docutils literal notranslate"><span class="pre">abfss://</span></code>).
+Authenticated object-store reads use standard provider environment variables
+such as <code class="docutils literal notranslate"><span class="pre">AWS_ACCESS_KEY_ID</span></code>, <code class="docutils literal notranslate"><span class="pre">AWS_SECRET_ACCESS_KEY</span></code>, <code class="docutils literal notranslate"><span class="pre">AWS_SESSION_TOKEN</span></code>,
+<code class="docutils literal notranslate"><span class="pre">GOOGLE_SERVICE_ACCOUNT</span></code>, <code class="docutils literal notranslate"><span class="pre">GOOGLE_APPLICATION_CREDENTIALS</span></code>,
+<code class="docutils literal notranslate"><span class="pre">AZURE_STORAGE_ACCOUNT_NAME</span></code>, <code class="docutils literal notranslate"><span class="pre">AZURE_STORAGE_ACCOUNT_KEY</span></code>,
+<code class="docutils literal notranslate"><span class="pre">AZURE_STORAGE_SAS_TOKEN</span></code>, and Azure identity variables. For anonymous public
+objects, set <code class="docutils literal notranslate"><span class="pre">ARROW_LINT_OBJECT_STORE_ANONYMOUS=true</span></code>; provider-specific
+<code class="docutils literal notranslate"><span class="pre">*_SKIP_SIGNATURE=true</span></code> variables are also forwarded. Remote URLs are
+downloaded into memory before scanning. Local directory
+expansion still applies to local paths only; remote Lance datasets and remote
+directory walking are not supported yet.</p>
 <p>The project also defines an extension boundary for DuckDB-focused checks.
 Iceberg table metadata, the latest local Lance manifest, and Vortex container
 metadata are checked by built-in rules.</p>
