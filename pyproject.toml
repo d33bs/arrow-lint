@@ -97,10 +97,10 @@ ini_options.addopts = [
 ]
 
 [tool.coverage]
-run.branch = true
 run.source = [ "src/arrow_lint" ]
-report.show_missing = true
+run.branch = true
 report.skip_covered = true
+report.show_missing = true
 
 [tool.poe]
 # tasks for development environments
