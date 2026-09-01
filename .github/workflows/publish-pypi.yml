@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: false
       - name: Rust setup
@@ -84,7 +84,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: false
       - name: Rust setup
@@ -126,7 +126,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v10.0.1
         with:
           enable-cache: false
       - name: Download package distributions
@@ -144,4 +144,4 @@ jobs:
           uvx twine check dist/*
           python tools/check_release_artifacts.py dist
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.14.1
+        uses: pypa/gh-action-pypi-publish@v1.14.2
